@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Bitcount+Prop+Single:wght@100..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+	/* Custom SnowMotion Color Palette */
+	--color-snow: #f8fafc;
+	--color-sky-blue: #3b82f6;
+	--color-sky-light: #93c5fd;
+	--color-winter-blue: #1e40af;
+	--color-carrot: #ea580c;
+	--color-coal: #1f2937;
+	--color-ice: #e0f2fe;
+	--color-frost: #cffafe;
+
+	/* Game UI Colors */
+	--color-ui-primary: var(--color-sky-blue);
+	--color-ui-secondary: var(--color-winter-blue);
+	--color-ui-accent: var(--color-carrot);
+	--color-ui-background: var(--color-snow);
+	--color-ui-overlay: rgba(0, 0, 0, 0.5);
+
+	/* Accent colors */
+	--accent-red: #ef4444;
+
+	/* Status Colors */
+	--color-success: #10b981;
+	--color-error: #ef4444;
+	--color-warning: #f59e0b;
+	--color-info: var(--color-sky-blue);
+}
+
+/* Custom CSS Variables for Tailwind */
+:root {
+	--snow: var(--color-snow);
+	--sky-blue: var(--color-sky-blue);
+	--sky-light: var(--color-sky-light);
+	--winter-blue: var(--color-winter-blue);
+	--carrot: var(--color-carrot);
+	--coal: var(--color-coal);
+	--ice: var(--color-ice);
+	--frost: var(--color-frost);
+}
+
+body {
+	font-family: "Bitcount Prop Single", system-ui;
+	font-optical-sizing: auto;
+	font-weight: 700;
+	font-style: normal;
+	font-variation-settings: "slnt" 0, "CRSV" 0.5, "ELSH" 0, "ELXP" 0;
+}
+
+/* Remove default scrollbar */
+::-webkit-scrollbar {
+	display: none;
+}
