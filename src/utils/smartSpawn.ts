@@ -1,20 +1,16 @@
 import type { ItemType } from "../types/game";
-import type { DifficultyLevel } from "../types/difficulty";
-import { DIFFICULTY_CONFIGS } from "../types/difficulty";
 
 /**
  * Smart spawning algorithm that biases towards spawning the next needed item
- * for building a snowman, based on difficulty level.
+ * for building a snowman. Uses a fixed 50% chance to spawn needed items.
  */
 export const getSmartSpawnItem = (
-	nextNeededItem: ItemType | null,
-	difficulty: DifficultyLevel
+	nextNeededItem: ItemType | null
 ): ItemType => {
-	const config = DIFFICULTY_CONFIGS[difficulty];
 	const random = Math.random();
 
-	// If we have a needed item and random is within the weight threshold
-	if (nextNeededItem && random < config.neededItemWeight) {
+	// 50% chance to spawn the needed item
+	if (nextNeededItem && random < 0.5) {
 		return nextNeededItem;
 	}
 

@@ -49,7 +49,14 @@ body {
 	font-variation-settings: "slnt" 0, "CRSV" 0.5, "ELSH" 0, "ELXP" 0;
 }
 
-/* Remove default scrollbar */
+button {
+	cursor: pointer;
+}
+
 ::-webkit-scrollbar {
+	display: none;
+}
+
+::-moz-scrollbar {
 	display: none;
 }

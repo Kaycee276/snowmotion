@@ -41,7 +41,7 @@ const Game = () => {
 		const config = DIFFICULTY_CONFIGS[difficulty];
 
 		// Use smart spawning algorithm
-		const itemType = getSmartSpawnItem(nextNeededItem, difficulty);
+		const itemType = getSmartSpawnItem(nextNeededItem);
 
 		const newItem: FallingItem = {
 			id: getNextItemId(),
@@ -138,16 +138,24 @@ const Game = () => {
 	const config = DIFFICULTY_CONFIGS[difficulty];
 
 	return (
-		<div className="relative w-full h-screen bg-linear-to-b from-blue-400 via-blue-300 to-white overflow-hidden">
-			{/* Game UI */}
-			<div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start gap-4">
-				<div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-3 shadow-lg">
-					<div className="text-2xl font-bold text-blue-600">
+		<div
+			className="relative w-full h-screen bg-linear-to-b from-blue-400 via-blue-300 to-white overflow-hidden"
+			style={{
+				backgroundImage: "url(/snow-bg-2.jpg)",
+				backgroundSize: "cover",
+				backgroundPosition: "center",
+			}}
+		>
+			{/* Game UI - Responsive */}
+			<div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-10 flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-4">
+				{/* Score & Combo */}
+				<div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 sm:px-6 py-2 sm:py-3 shadow-lg w-full sm:w-auto">
+					<div className="text-lg sm:text-2xl font-bold text-blue-600">
 						Score: <span className="transition-all duration-300">{score}</span>
 					</div>
-					<div className="text-lg text-gray-600">Combo: {combo}</div>
+					<div className="text-sm sm:text-lg text-gray-600">Combo: {combo}</div>
 					{isPlaying && nextNeededItem && (
-						<div className="text-sm text-gray-500 mt-1">
+						<div className="text-xs sm:text-sm text-gray-500 mt-1">
 							Next:{" "}
 							{nextNeededItem === "snowball"
 								? "❄️"
@@ -160,9 +168,11 @@ const Game = () => {
 					)}
 				</div>
 
-				<div className="flex gap-4 items-start">
-					<div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-3 shadow-lg">
-						<div className="text-2xl font-bold text-red-600">
+				{/* Timer & Wallet - Right side */}
+				<div className="flex flex-row sm:flex-row gap-2 sm:gap-4 items-start w-full sm:w-auto">
+					{/* Timer */}
+					<div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 sm:px-6 py-2 sm:py-3 shadow-lg shrink-0">
+						<div className="text-lg sm:text-2xl font-bold text-red-600">
 							{Math.floor(timeRemaining / 60)}:
 							{(timeRemaining % 60).toString().padStart(2, "0")}
 						</div>
@@ -171,7 +181,8 @@ const Game = () => {
 						)}
 					</div>
 
-					<div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg">
+					{/* Wallet Connection */}
+					<div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-4 py-2 sm:py-3 shadow-lg flex-1 sm:flex-initial">
 						<WalletConnection />
 					</div>
 				</div>
@@ -179,9 +190,9 @@ const Game = () => {
 
 			{/* Collection Zone Indicator */}
 			{isPlaying && (
-				<div className="absolute bottom-10 left-0 right-0 h-12 z-5 border-t-4 border-dashed border-yellow-400 bg-yellow-200/30 backdrop-blur-sm">
-					<div className="text-center text-yellow-700 font-semibold text-sm pt-2">
-						Collection Zone - Items auto-collect here! (or click anywhere to
+				<div className="absolute bottom-10 left-0 right-0 h-10 sm:h-12 z-5 border-t-4 border-dashed border-yellow-400 bg-yellow-200/30 backdrop-blur-sm">
+					<div className="text-center text-yellow-700 font-semibold text-xs sm:text-sm pt-2 px-2">
+						Collection Zone - Items auto-collect here! (or tap anywhere to
 						collect)
 					</div>
 				</div>
