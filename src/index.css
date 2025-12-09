@@ -41,6 +41,10 @@
 	--frost: var(--color-frost);
 }
 
+html {
+	overscroll-behavior: none;
+}
+
 body {
 	font-family: "Bitcount Prop Single", system-ui;
 	font-optical-sizing: auto;

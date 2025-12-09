@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
 import type { Address } from "viem";
+import type { DifficultyLevel } from "../types/difficulty";
 
 interface GameOverModalProps {
 	score: number;
+	difficulty: DifficultyLevel;
 	onRestart: () => void;
 }
 
@@ -11,16 +13,17 @@ interface LeaderboardEntry {
 	address: Address;
 	score: number;
 	timestamp: number;
+	difficulty: DifficultyLevel;
 }
 
-const GameOverModal = ({ score, onRestart }: GameOverModalProps) => {
+const GameOverModal = ({ score, difficulty, onRestart }: GameOverModalProps) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [txHash, setTxHash] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const { submitScore, isConnected, connect, address } = useWeb3();
 
-	const saveScoreLocally = (walletAddress: Address, scoreValue: number) => {
+	const saveScoreLocally = (walletAddress: Address, scoreValue: number, difficultyLevel: DifficultyLevel) => {
 		try {
 			const savedScores = localStorage.getItem("snowmotion-scores");
 			const scores: LeaderboardEntry[] = savedScores
@@ -31,6 +34,7 @@ const GameOverModal = ({ score, onRestart }: GameOverModalProps) => {
 				address: walletAddress,
 				score: scoreValue,
 				timestamp: Date.now(),
+				difficulty: difficultyLevel,
 			});
 
 			localStorage.setItem("snowmotion-scores", JSON.stringify(scores));
@@ -58,7 +62,7 @@ const GameOverModal = ({ score, onRestart }: GameOverModalProps) => {
 			setTxHash(hash);
 
 			// Save to localStorage as backup/for demo
-			saveScoreLocally(address, score);
+			saveScoreLocally(address, score, difficulty);
 
 			setIsSubmitted(true);
 		} catch (err) {
@@ -67,7 +71,7 @@ const GameOverModal = ({ score, onRestart }: GameOverModalProps) => {
 			setError(errorMessage);
 			// Still save locally even if blockchain submission fails
 			if (address) {
-				saveScoreLocally(address, score);
+				saveScoreLocally(address, score, difficulty);
 			}
 		} finally {
 			setIsSubmitting(false);

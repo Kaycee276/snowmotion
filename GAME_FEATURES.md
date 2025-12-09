@@ -6,7 +6,6 @@
 
 - ✅ Falling items animation system
 - ✅ Multiple item types (Snowball, Carrot, Coal, Hat, Scarf)
-- ✅ Automatic item collection when items reach bottom zone
 - ✅ Manual item collection (click/tap)
 - ✅ Snowman building logic with correct order validation
 - ✅ Score system (+1 for snowman, +1 bonus for scarf)
@@ -16,7 +15,7 @@
 
 ### UI/UX
 
-- ✅ Beautiful gradient background (sky to snow)
+- ✅ Beautiful image background
 - ✅ Real-time score and combo display
 - ✅ Countdown timer display
 - ✅ Snowman progress visualization
