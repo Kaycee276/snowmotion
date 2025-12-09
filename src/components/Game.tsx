@@ -224,7 +224,13 @@ const Game = () => {
 			)}
 
 			{/* Game Over Modal */}
-			{isGameOver && <GameOverModal score={score} onRestart={handleRestart} />}
+			{isGameOver && (
+				<GameOverModal
+					score={score}
+					onRestart={handleRestart}
+					difficulty={difficulty}
+				/>
+			)}
 
 			{/* Leaderboard */}
 			<Leaderboard
