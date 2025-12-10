@@ -7,6 +7,7 @@ interface GameOverModalProps {
 	score: number;
 	difficulty: DifficultyLevel;
 	onRestart: () => void;
+	onShowLeaderboard: () => void;
 }
 
 interface LeaderboardEntry {
@@ -16,14 +17,23 @@ interface LeaderboardEntry {
 	difficulty: DifficultyLevel;
 }
 
-const GameOverModal = ({ score, difficulty, onRestart }: GameOverModalProps) => {
+const GameOverModal = ({
+	score,
+	difficulty,
+	onRestart,
+	onShowLeaderboard,
+}: GameOverModalProps) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [txHash, setTxHash] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const { submitScore, isConnected, connect, address } = useWeb3();
 
-	const saveScoreLocally = (walletAddress: Address, scoreValue: number, difficultyLevel: DifficultyLevel) => {
+	const saveScoreLocally = (
+		walletAddress: Address,
+		scoreValue: number,
+		difficultyLevel: DifficultyLevel
+	) => {
 		try {
 			const savedScores = localStorage.getItem("snowmotion-scores");
 			const scores: LeaderboardEntry[] = savedScores
@@ -81,8 +91,12 @@ const GameOverModal = ({ score, difficulty, onRestart }: GameOverModalProps) => 
 	return (
 		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-100 overflow-hidden">
 			<div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md mx-2 text-center shadow-2xl max-h-[95vh] overflow-hidden">
-				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">Game Over! 🎉</h2>
-				<div className="text-4xl sm:text-6xl font-bold text-gray-800 mb-4">{score}</div>
+				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">
+					Game Over! 🎉
+				</h2>
+				<div className="text-4xl sm:text-6xl font-bold text-gray-800 mb-4">
+					{score}
+				</div>
 				<p className="text-gray-700 mb-4">Final Score</p>
 
 				{!isSubmitted ? (
@@ -103,37 +117,43 @@ const GameOverModal = ({ score, difficulty, onRestart }: GameOverModalProps) => 
 								? "Connect Wallet"
 								: "Submit Score"}
 						</button>
-						<button
-							onClick={onRestart}
-							disabled={isSubmitting}
-							className="w-full bg-gray-300 text-gray-700 px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							Play Again
-						</button>
 					</>
 				) : (
 					<>
 						<div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg mb-3">
-							<div className="font-semibold text-sm">
-								✓ Score submitted!
-							</div>
+							<div className="font-semibold text-sm">✓ Score submitted!</div>
 							{txHash && (
 								<div className="text-xs mt-1 break-all">
 									Tx: {txHash.slice(0, 8)}...{txHash.slice(-6)}
 								</div>
 							)}
 						</div>
-						<button
-							onClick={onRestart}
-							className="w-full bg-blue-600 text-white px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-blue-700 transition-colors"
-						>
-							Play Again
-						</button>
 					</>
 				)}
+
+				<div className="flex gap-2">
+					<button
+						onClick={onRestart}
+						disabled={isSubmitting}
+						className=" bg-gray-300 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 "
+					>
+						Play Again
+					</button>
+					<button
+						onClick={onShowLeaderboard}
+						className="bg-gray-300 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors"
+					>
+						View Leaderboard 🏆
+					</button>
+				</div>
 			</div>
 		</div>
 	);
 };
 
 export default GameOverModal;
+
+// Allow users to change difficulty in the gameovermodal only after submitting also create a separete div for the timer so that it can be seen very well and add a very noticable effect to it when timer is low(>= 5secs)
+// Also when the user loses a life add a very noticable visual effect
+
+// also give a well detailed explanation of the game at the start of the game

@@ -46,17 +46,33 @@ const Game = () => {
 		const nextNeededItem = state.getNextNeededItem();
 		const config = DIFFICULTY_CONFIGS[difficulty];
 
-		// Use smart spawning algorithm
-		const itemType = getSmartSpawnItem(nextNeededItem);
+		// Use advanced smart spawning algorithm with game context
+		const itemType = getSmartSpawnItem({
+			nextNeededItem,
+			currentItems: state.items.map(item => item.type),
+			timerSeconds: state.timerSeconds,
+			combo: state.combo,
+			difficulty: state.difficulty,
+			lives: state.lives
+		});
+
+		// Calculate dynamic speed based on score and difficulty
+		const speedMultiplier = 1 + (state.score * 0.02) + (state.combo * 0.05);
+		const difficultySpeedBoost = {
+			easy: 1,
+			medium: 1.2,
+			hard: 1.5
+		}[difficulty];
+		
+		const baseSpeed = Math.random() * (config.fallSpeedMax - config.fallSpeedMin) + config.fallSpeedMin;
+		const finalSpeed = Math.min(baseSpeed * speedMultiplier * difficultySpeedBoost, 2.0);
 
 		const newItem: FallingItem = {
 			id: getNextItemId(),
 			type: itemType,
 			x: Math.random() * 80 + 10,
 			y: -10,
-			speed:
-				Math.random() * (config.fallSpeedMax - config.fallSpeedMin) +
-				config.fallSpeedMin,
+			speed: finalSpeed,
 		};
 		spawnItem(newItem);
 	}, [spawnItem, getNextItemId, difficulty]);
@@ -170,9 +186,13 @@ const Game = () => {
 						Combo: {combo}
 					</div>
 					{timerActive && (
-						<div className={`text-xs sm:text-sm font-bold mt-1 ${
-							timerSeconds <= 5 ? 'text-red-600 animate-pulse' : 'text-orange-600'
-						}`}>
+						<div
+							className={`text-xs sm:text-sm font-bold mt-1 ${
+								timerSeconds <= 5
+									? "text-red-600 animate-pulse"
+									: "text-orange-600"
+							}`}
+						>
 							⏰ {timerSeconds}s
 						</div>
 					)}
@@ -249,6 +269,7 @@ const Game = () => {
 					score={score}
 					onRestart={handleRestart}
 					difficulty={difficulty}
+					onShowLeaderboard={() => setShowLeaderboard(true)}
 				/>
 			)}
 

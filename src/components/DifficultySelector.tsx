@@ -41,7 +41,7 @@ const DifficultySelector = ({
 									className={`p-2 sm:p-3 rounded-lg border-2 transition-all ${
 										isSelected
 											? "border-blue-600 bg-blue-50 scale-105"
-											: "border-gray-300 hover:border-blue-300 hover:bg-gray-50"
+											: "border-gray-300 border-dotted hover:border-blue-300 hover:bg-gray-50"
 									}`}
 								>
 									<div className="text-sm sm:text-lg font-bold text-gray-800 mb-1">

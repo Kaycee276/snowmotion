@@ -39,3 +39,4 @@ export const ITEM_EMOJIS: Record<ItemType, string> = {
 export const SNOWMAN_ORDER: ItemType[] = ["snowball", "coal", "carrot", "hat"];
 export const INITIAL_LIVES = 5;
 export const MAX_ITEMS_ON_SCREEN = 15;
+export const TIMER_DURATION = 30;

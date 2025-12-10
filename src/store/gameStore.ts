@@ -142,7 +142,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					items: state.items.filter((item) => item.id !== itemId),
 				});
 			} else {
-				// Wrong item - lose a life and reset progress
+				// Wrong item - lose a life, reset progress, and restart timer
 				const newLives = state.lives - 1;
 				set({
 					lives: newLives,
@@ -151,6 +151,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					items: state.items.filter((item) => item.id !== itemId),
 					isGameOver: newLives <= 0,
 					isPlaying: newLives > 0,
+					timerSeconds: 30, // Reset timer to 30 seconds
+					timerActive: newLives > 0, // Keep timer active if still alive
 				});
 			}
 		} else {

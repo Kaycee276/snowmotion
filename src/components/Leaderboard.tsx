@@ -67,7 +67,7 @@ const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-40">
+		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-110">
 			<div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
 				<div className="flex justify-between items-start mb-6">
 					<div>
