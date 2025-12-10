@@ -50,7 +50,7 @@ html {
 body {
 	font-family: "Bitcount Prop Single", system-ui;
 	font-optical-sizing: auto;
-	font-weight: 700;
+	font-weight: normal;
 	font-style: normal;
 	font-variation-settings: "slnt" 0, "CRSV" 0.5, "ELSH" 0, "ELXP" 0;
 	height: 100%;

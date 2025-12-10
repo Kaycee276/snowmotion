@@ -7,6 +7,8 @@ interface GameStore extends GameState {
 	items: FallingItem[];
 	itemIdCounter: number;
 	difficulty: DifficultyLevel;
+	timerSeconds: number;
+	timerActive: boolean;
 	// Actions
 	spawnItem: (item: FallingItem) => void;
 	removeItem: (id: string) => void;
@@ -27,6 +29,9 @@ interface GameStore extends GameState {
 	startGame: () => void;
 	getNextItemId: () => string;
 	getNextNeededItem: () => ItemType | null;
+	startTimer: () => void;
+	decrementTimer: () => void;
+	resetTimer: () => void;
 }
 
 const initialSnowman = {
@@ -48,6 +53,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	items: [],
 	itemIdCounter: 0,
 	difficulty: "medium",
+	timerSeconds: 30,
+	timerActive: false,
 
 	// Actions
 	spawnItem: (item) =>
@@ -119,6 +126,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 						combo: newCombo,
 						currentSnowman: { ...initialSnowman }, // Reset for next snowman
 						items: state.items.filter((item) => item.id !== itemId), // Remove collected item
+						timerSeconds: state.timerSeconds + 15, // Add 15 seconds
 					});
 				} else {
 					// Partial progress - update snowman and remove item
@@ -164,6 +172,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			currentSnowman: { ...state.currentSnowman, [part]: value },
 		})),
 
+	startTimer: () => set({ timerSeconds: 30, timerActive: true }),
+
+	decrementTimer: () => {
+		const state = get();
+		if (!state.timerActive) return;
+
+		const newSeconds = state.timerSeconds - 1;
+		if (newSeconds <= 0) {
+			// Timer expired - lose a life
+			const newLives = state.lives - 1;
+			set({
+				lives: newLives,
+				timerSeconds: 30,
+				timerActive: newLives > 0, // Keep timer active if still alive
+				isGameOver: newLives <= 0,
+				isPlaying: newLives > 0,
+			});
+		} else {
+			set({ timerSeconds: newSeconds });
+		}
+	},
+
+	resetTimer: () => set({ timerSeconds: 30, timerActive: false }),
+
 	resetGame: () =>
 		set({
 			score: 0,
@@ -174,6 +206,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			combo: 0,
 			items: [],
 			itemIdCounter: 0,
+			timerSeconds: 30,
+			timerActive: false,
 		}),
 
 	startGame: () =>
@@ -186,6 +220,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			combo: 0,
 			items: [],
 			itemIdCounter: 0,
+			timerSeconds: 30,
+			timerActive: true,
 		}),
 
 	getNextItemId: () => {

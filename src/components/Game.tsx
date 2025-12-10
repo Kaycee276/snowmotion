@@ -21,16 +21,20 @@ const Game = () => {
 		currentSnowman,
 		combo,
 		difficulty,
+		timerSeconds,
+		timerActive,
 		spawnItem,
 		collectItem,
 		startGame,
 		resetGame,
 		getNextItemId,
 		getNextNeededItem,
+		decrementTimer,
 	} = useGameStore();
 
 	const spawnTimerRef = useRef<number | null>(null);
 	const gameLoopRef = useRef<number | null>(null);
+	const countdownTimerRef = useRef<number | null>(null);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
 
 	const createAndSpawnItem = useCallback(() => {
@@ -113,6 +117,26 @@ const Game = () => {
 		};
 	}, [isPlaying, isGameOver, difficulty, createAndSpawnItem]);
 
+	// Timer countdown effect
+	useEffect(() => {
+		if (!timerActive || !isPlaying) {
+			if (countdownTimerRef.current) {
+				clearInterval(countdownTimerRef.current);
+			}
+			return;
+		}
+
+		countdownTimerRef.current = window.setInterval(() => {
+			decrementTimer();
+		}, 1000);
+
+		return () => {
+			if (countdownTimerRef.current) {
+				clearInterval(countdownTimerRef.current);
+			}
+		};
+	}, [timerActive, isPlaying, decrementTimer]);
+
 	const handleStartGame = () => {
 		startGame();
 	};
@@ -145,6 +169,13 @@ const Game = () => {
 					<div className="text-xs sm:text-base text-gray-600">
 						Combo: {combo}
 					</div>
+					{timerActive && (
+						<div className={`text-xs sm:text-sm font-bold mt-1 ${
+							timerSeconds <= 5 ? 'text-red-600 animate-pulse' : 'text-orange-600'
+						}`}>
+							⏰ {timerSeconds}s
+						</div>
+					)}
 					{isPlaying && nextNeededItem && (
 						<div className="text-xs sm:text-sm text-gray-500 mt-1">
 							Next:{" "}

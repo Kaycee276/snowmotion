@@ -3,6 +3,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { somniaMainnet } from "../utils/somniaMainnet";
+// import { somniaTestnet, mainnet } from "@reown/appkit/networks";
 import type { AppKitNetwork } from "@reown/appkit/networks";
 import type { ReactNode } from "react";
 
