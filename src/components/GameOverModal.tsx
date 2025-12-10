@@ -79,53 +79,53 @@ const GameOverModal = ({ score, difficulty, onRestart }: GameOverModalProps) => 
 	};
 
 	return (
-		<div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-100">
-			<div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
-				<h2 className="text-4xl font-bold mb-4 text-blue-600">Game Over! 🎉</h2>
-				<div className="text-6xl font-bold text-gray-800 mb-6">{score}</div>
-				<p className="text-gray-700 mb-6">Final Score</p>
+		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-100 overflow-hidden">
+			<div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md mx-2 text-center shadow-2xl max-h-[95vh] overflow-hidden">
+				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">Game Over! 🎉</h2>
+				<div className="text-4xl sm:text-6xl font-bold text-gray-800 mb-4">{score}</div>
+				<p className="text-gray-700 mb-4">Final Score</p>
 
 				{!isSubmitted ? (
 					<>
 						{error && (
-							<div className="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+							<div className="bg-red-100 text-red-700 px-3 py-2 rounded-lg mb-3 text-xs sm:text-sm">
 								{error}
 							</div>
 						)}
 						<button
 							onClick={handleSubmitScore}
 							disabled={isSubmitting}
-							className="w-full bg-blue-600 text-white px-8 py-3 rounded-lg text-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+							className="w-full bg-blue-600 text-white px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
 						>
 							{isSubmitting
-								? "Submitting to Blockchain..."
+								? "Submitting..."
 								: !isConnected
-								? "Connect Wallet to Submit"
-								: "Submit Score to Leaderboard"}
+								? "Connect Wallet"
+								: "Submit Score"}
 						</button>
 						<button
 							onClick={onRestart}
 							disabled={isSubmitting}
-							className="w-full bg-gray-300 text-gray-700 px-8 py-3 rounded-lg text-xl font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							className="w-full bg-gray-300 text-gray-700 px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							Play Again
 						</button>
 					</>
 				) : (
 					<>
-						<div className="bg-green-100 text-green-700 px-4 py-3 rounded-lg mb-4">
-							<div className="font-semibold">
-								✓ Score submitted to blockchain!
+						<div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg mb-3">
+							<div className="font-semibold text-sm">
+								✓ Score submitted!
 							</div>
 							{txHash && (
-								<div className="text-xs mt-2 break-all">
-									Tx: {txHash.slice(0, 10)}...{txHash.slice(-8)}
+								<div className="text-xs mt-1 break-all">
+									Tx: {txHash.slice(0, 8)}...{txHash.slice(-6)}
 								</div>
 							)}
 						</div>
 						<button
 							onClick={onRestart}
-							className="w-full bg-blue-600 text-white px-8 py-3 rounded-lg text-xl font-semibold hover:bg-blue-700 transition-colors"
+							className="w-full bg-blue-600 text-white px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-blue-700 transition-colors"
 						>
 							Play Again
 						</button>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { ItemType, FallingItem, GameState } from "../types/game";
 import type { DifficultyLevel } from "../types/difficulty";
-import { SNOWMAN_ORDER } from "../types/game";
+import { SNOWMAN_ORDER, INITIAL_LIVES } from "../types/game";
 
 interface GameStore extends GameState {
 	items: FallingItem[];
@@ -40,7 +40,7 @@ const initialSnowman = {
 export const useGameStore = create<GameStore>((set, get) => ({
 	// Initial state
 	score: 0,
-	lives: 5,
+	lives: INITIAL_LIVES,
 	isPlaying: false,
 	isGameOver: false,
 	currentSnowman: { ...initialSnowman },
