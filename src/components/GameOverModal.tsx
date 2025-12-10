@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
+import { useGameStore } from "../store/gameStore";
+import { DIFFICULTY_CONFIGS } from "../types/difficulty";
 import type { Address } from "viem";
 import type { DifficultyLevel } from "../types/difficulty";
 
@@ -129,6 +131,31 @@ const GameOverModal = ({
 							)}
 						</div>
 					</>
+				)}
+
+				{isSubmitted && (
+					<div className="mb-4">
+						<p className="text-sm text-gray-600 mb-2">Change Difficulty:</p>
+						<div className="flex gap-1 justify-center">
+							{Object.entries(DIFFICULTY_CONFIGS).map(([key, config]) => (
+								<button
+									key={key}
+									onClick={() =>
+										useGameStore
+											.getState()
+											.setDifficulty(key as DifficultyLevel)
+									}
+									className={`px-2 py-1 text-xs rounded ${
+										difficulty === key
+											? "bg-blue-600 text-white"
+											: "bg-gray-200 text-gray-700"
+									}`}
+								>
+									{config.label}
+								</button>
+							))}
+						</div>
+					</div>
 				)}
 
 				<div className="flex gap-2">

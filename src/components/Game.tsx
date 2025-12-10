@@ -7,6 +7,8 @@ import GameOverModal from "./GameOverModal";
 import WalletConnection from "./WalletConnection";
 import Leaderboard from "./Leaderboard";
 import DifficultySelector from "./DifficultySelector";
+import Timer from "./Timer";
+import GameInstructions from "./GameInstructions";
 import { useGameStore } from "../store/gameStore";
 import { getSmartSpawnItem } from "../utils/smartSpawn";
 import { DIFFICULTY_CONFIGS } from "../types/difficulty";
@@ -23,6 +25,7 @@ const Game = () => {
 		difficulty,
 		timerSeconds,
 		timerActive,
+		lifeLossEffect,
 		spawnItem,
 		collectItem,
 		startGame,
@@ -36,6 +39,7 @@ const Game = () => {
 	const gameLoopRef = useRef<number | null>(null);
 	const countdownTimerRef = useRef<number | null>(null);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
+	const [showInstructions, setShowInstructions] = useState(true);
 
 	const createAndSpawnItem = useCallback(() => {
 		const state = useGameStore.getState();
@@ -49,23 +53,28 @@ const Game = () => {
 		// Use advanced smart spawning algorithm with game context
 		const itemType = getSmartSpawnItem({
 			nextNeededItem,
-			currentItems: state.items.map(item => item.type),
+			currentItems: state.items.map((item) => item.type),
 			timerSeconds: state.timerSeconds,
 			combo: state.combo,
 			difficulty: state.difficulty,
-			lives: state.lives
+			lives: state.lives,
 		});
 
 		// Calculate dynamic speed based on score and difficulty
-		const speedMultiplier = 1 + (state.score * 0.02) + (state.combo * 0.05);
+		const speedMultiplier = 1 + state.score * 0.02 + state.combo * 0.05;
 		const difficultySpeedBoost = {
 			easy: 1,
 			medium: 1.2,
-			hard: 1.5
+			hard: 1.5,
 		}[difficulty];
-		
-		const baseSpeed = Math.random() * (config.fallSpeedMax - config.fallSpeedMin) + config.fallSpeedMin;
-		const finalSpeed = Math.min(baseSpeed * speedMultiplier * difficultySpeedBoost, 2.0);
+
+		const baseSpeed =
+			Math.random() * (config.fallSpeedMax - config.fallSpeedMin) +
+			config.fallSpeedMin;
+		const finalSpeed = Math.min(
+			baseSpeed * speedMultiplier * difficultySpeedBoost,
+			2.0
+		);
 
 		const newItem: FallingItem = {
 			id: getNextItemId(),
@@ -154,6 +163,7 @@ const Game = () => {
 	}, [timerActive, isPlaying, decrementTimer]);
 
 	const handleStartGame = () => {
+		setShowInstructions(false);
 		startGame();
 	};
 
@@ -167,7 +177,9 @@ const Game = () => {
 
 	return (
 		<div
-			className="fixed inset-0 w-full h-full bg-linear-to-b from-blue-400 via-blue-300 to-white overflow-hidden"
+			className={`fixed inset-0 w-full h-full bg-linear-to-b from-blue-400 via-blue-300 to-white overflow-hidden transition-all duration-1000 ${
+				lifeLossEffect ? "animate-pulse bg-red-500/50" : ""
+			}`}
 			style={{
 				backgroundImage: "url(/snow-bg-2.jpg)",
 				backgroundSize: "cover",
@@ -185,17 +197,7 @@ const Game = () => {
 					<div className="text-xs sm:text-base text-gray-600">
 						Combo: {combo}
 					</div>
-					{timerActive && (
-						<div
-							className={`text-xs sm:text-sm font-bold mt-1 ${
-								timerSeconds <= 5
-									? "text-red-600 animate-pulse"
-									: "text-orange-600"
-							}`}
-						>
-							⏰ {timerSeconds}s
-						</div>
-					)}
+
 					{isPlaying && nextNeededItem && (
 						<div className="text-xs sm:text-sm text-gray-500 mt-1">
 							Next:{" "}
@@ -229,14 +231,12 @@ const Game = () => {
 				</div>
 			</div>
 
-			{/* Collection Zone Indicator */}
 			{isPlaying && (
-				<div className="absolute bottom-8 sm:bottom-10 left-0 right-0 h-8 sm:h-10 z-5 border-t-4 border-dashed border-yellow-400 bg-yellow-200/30 backdrop-blur-sm">
-					<div className="text-center text-yellow-700 font-semibold text-xs pt-1 px-2">
-						Collection Zone - Items auto-collect here!
-					</div>
-				</div>
+				<div className="absolute bottom-8 sm:bottom-10 left-0 right-0 h-8 sm:h-10 z-5 border-t-4 border-dashed border-yellow-400 bg-yellow-200/30 backdrop-blur-sm"></div>
 			)}
+
+			{/* Timer Display */}
+			<Timer seconds={timerSeconds} isActive={timerActive} />
 
 			{/* Snowman Display */}
 			<SnowmanDisplay currentSnowman={currentSnowman} />
@@ -255,8 +255,11 @@ const Game = () => {
 				))}
 			</div>
 
+			{/* Game Instructions */}
+			{showInstructions && <GameInstructions onStart={handleStartGame} />}
+
 			{/* Difficulty Selector / Start Screen */}
-			{!isPlaying && !isGameOver && (
+			{!isPlaying && !isGameOver && !showInstructions && (
 				<DifficultySelector
 					onStart={handleStartGame}
 					onShowLeaderboard={() => setShowLeaderboard(true)}

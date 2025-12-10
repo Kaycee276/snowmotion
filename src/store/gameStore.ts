@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { ItemType, FallingItem, GameState } from "../types/game";
 import type { DifficultyLevel } from "../types/difficulty";
-import { SNOWMAN_ORDER, INITIAL_LIVES } from "../types/game";
+import { SNOWMAN_ORDER, INITIAL_LIVES, WRONG_ITEM_PENALTY } from "../types/game";
 
 interface GameStore extends GameState {
 	items: FallingItem[];
@@ -9,6 +9,7 @@ interface GameStore extends GameState {
 	difficulty: DifficultyLevel;
 	timerSeconds: number;
 	timerActive: boolean;
+	lifeLossEffect: boolean;
 	// Actions
 	spawnItem: (item: FallingItem) => void;
 	removeItem: (id: string) => void;
@@ -32,6 +33,7 @@ interface GameStore extends GameState {
 	startTimer: () => void;
 	decrementTimer: () => void;
 	resetTimer: () => void;
+	setLifeLossEffect: (effect: boolean) => void;
 }
 
 const initialSnowman = {
@@ -55,6 +57,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	difficulty: "medium",
 	timerSeconds: 30,
 	timerActive: false,
+	lifeLossEffect: false,
 
 	// Actions
 	spawnItem: (item) =>
@@ -142,18 +145,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					items: state.items.filter((item) => item.id !== itemId),
 				});
 			} else {
-				// Wrong item - lose a life, reset progress, and restart timer
-				const newLives = state.lives - 1;
+				// Wrong item - subtract time and reset progress
+				const newTimerSeconds = Math.max(0, state.timerSeconds - WRONG_ITEM_PENALTY);
 				set({
-					lives: newLives,
 					combo: 0,
 					currentSnowman: { ...initialSnowman },
 					items: state.items.filter((item) => item.id !== itemId),
-					isGameOver: newLives <= 0,
-					isPlaying: newLives > 0,
-					timerSeconds: 30, // Reset timer to 30 seconds
-					timerActive: newLives > 0, // Keep timer active if still alive
+					timerSeconds: newTimerSeconds,
+					lifeLossEffect: true,
 				});
+				// Reset effect after animation
+				setTimeout(() => set({ lifeLossEffect: false }), 1000);
 			}
 		} else {
 			// All items collected but something went wrong - just remove item
@@ -187,10 +189,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			set({
 				lives: newLives,
 				timerSeconds: 30,
-				timerActive: newLives > 0, // Keep timer active if still alive
+				timerActive: newLives > 0,
 				isGameOver: newLives <= 0,
 				isPlaying: newLives > 0,
+				lifeLossEffect: true,
 			});
+			// Reset effect after animation
+			setTimeout(() => set({ lifeLossEffect: false }), 1000);
 		} else {
 			set({ timerSeconds: newSeconds });
 		}
@@ -210,6 +215,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			itemIdCounter: 0,
 			timerSeconds: 30,
 			timerActive: false,
+			lifeLossEffect: false,
 		}),
 
 	startGame: () =>
@@ -224,6 +230,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			itemIdCounter: 0,
 			timerSeconds: 30,
 			timerActive: true,
+			lifeLossEffect: false,
 		}),
 
 	getNextItemId: () => {
@@ -246,4 +253,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	},
 
 	setDifficulty: (difficulty) => set({ difficulty }),
+
+	setLifeLossEffect: (effect) => set({ lifeLossEffect: effect }),
 }));
