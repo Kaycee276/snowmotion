@@ -15,7 +15,7 @@ export interface SnowmanPart {
 
 export interface GameState {
 	score: number;
-	timeRemaining: number;
+	lives: number;
 	isPlaying: boolean;
 	isGameOver: boolean;
 	currentSnowman: {
@@ -37,7 +37,8 @@ export const ITEM_EMOJIS: Record<ItemType, string> = {
 };
 
 export const SNOWMAN_ORDER: ItemType[] = ["snowball", "coal", "carrot", "hat"];
-export const GAME_DURATION = 60; // seconds
+export const INITIAL_LIVES = 5;
+export const MAX_ITEMS_ON_SCREEN = 8;
 export const ITEM_FALL_SPEED_MIN = 0.1;
 export const ITEM_FALL_SPEED_MAX = 0.3;
 export const ITEM_SPAWN_INTERVAL_MIN = 800;

@@ -14,7 +14,7 @@ const Game = () => {
 	const {
 		items,
 		score,
-		timeRemaining,
+		lives,
 		isPlaying,
 		isGameOver,
 		currentSnowman,
@@ -22,9 +22,6 @@ const Game = () => {
 		difficulty,
 		spawnItem,
 		collectItem,
-		setTimeRemaining,
-		setIsPlaying,
-		setIsGameOver,
 		startGame,
 		resetGame,
 		getNextItemId,
@@ -37,6 +34,10 @@ const Game = () => {
 
 	const createAndSpawnItem = useCallback(() => {
 		const state = useGameStore.getState();
+
+		// Don't spawn if too many items on screen
+		if (state.items.length >= 15) return;
+
 		const nextNeededItem = state.getNextNeededItem();
 		const config = DIFFICULTY_CONFIGS[difficulty];
 
@@ -69,8 +70,10 @@ const Game = () => {
 			const itemsToAutoCollect = updatedItems.filter(
 				(item) => item.y >= 85 && item.y <= 95
 			);
+
+			// Remove items that fell off screen (y > 110) and items in collection zone
 			const itemsToKeep = updatedItems.filter(
-				(item) => item.y < 85 || item.y > 95
+				(item) => item.y < 85 && item.y <= 110
 			);
 
 			useGameStore.setState({ items: itemsToKeep });
@@ -78,7 +81,7 @@ const Game = () => {
 			itemsToAutoCollect.forEach((item) => {
 				collectItem(item.id, item.type);
 			});
-		}, 16);
+		}, 32);
 
 		return () => {
 			if (gameLoopRef.current) {
@@ -108,22 +111,6 @@ const Game = () => {
 			}
 		};
 	}, [isPlaying, isGameOver, difficulty, createAndSpawnItem]);
-
-	useEffect(() => {
-		if (!isPlaying || isGameOver) return;
-
-		const timer = setInterval(() => {
-			const currentTime = useGameStore.getState().timeRemaining;
-			const newTime = currentTime - 1;
-			setTimeRemaining(newTime);
-			if (newTime <= 0) {
-				setIsPlaying(false);
-				setIsGameOver(true);
-			}
-		}, 1000);
-
-		return () => clearInterval(timer);
-	}, [isPlaying, isGameOver, setTimeRemaining, setIsPlaying, setIsGameOver]);
 
 	const handleStartGame = () => {
 		startGame();
@@ -168,13 +155,12 @@ const Game = () => {
 					)}
 				</div>
 
-				{/* Timer & Wallet - Right side */}
+				{/* Lives & Wallet - Right side */}
 				<div className="flex flex-row sm:flex-row gap-2 sm:gap-4 items-start w-full sm:w-auto">
-					{/* Timer */}
+					{/* Lives */}
 					<div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 sm:px-6 py-2 sm:py-3 shadow-lg shrink-0">
 						<div className="text-lg sm:text-2xl font-bold text-red-600">
-							{Math.floor(timeRemaining / 60)}:
-							{(timeRemaining % 60).toString().padStart(2, "0")}
+							❤️ {lives}
 						</div>
 						{isPlaying && (
 							<div className="text-xs text-gray-500 mt-1">{config.label}</div>

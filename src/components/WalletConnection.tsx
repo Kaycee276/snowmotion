@@ -10,7 +10,7 @@ export const WalletConnection = () => {
 	const { chainId } = useAppKitNetwork();
 
 	return (
-		<div className="flex items-center gap-4">
+		<div className="flex items-center gap-4 ">
 			{isConnected ? (
 				<div className="flex items-center gap-2 text-sm">
 					<div className="w-2 h-2 bg-green-500 rounded-full" />

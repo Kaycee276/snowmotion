@@ -14,7 +14,7 @@ interface GameStore extends GameState {
 	collectItem: (itemId: string, itemType: ItemType) => void;
 	setScore: (score: number) => void;
 	setCombo: (combo: number) => void;
-	setTimeRemaining: (time: number) => void;
+	setLives: (lives: number) => void;
 	setIsPlaying: (isPlaying: boolean) => void;
 	setIsGameOver: (isGameOver: boolean) => void;
 	setDifficulty: (difficulty: DifficultyLevel) => void;
@@ -40,7 +40,7 @@ const initialSnowman = {
 export const useGameStore = create<GameStore>((set, get) => ({
 	// Initial state
 	score: 0,
-	timeRemaining: 60,
+	lives: 5,
 	isPlaying: false,
 	isGameOver: false,
 	currentSnowman: { ...initialSnowman },
@@ -134,12 +134,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					items: state.items.filter((item) => item.id !== itemId),
 				});
 			} else {
-				// Wrong item - lose combo or point
+				// Wrong item - lose a life and reset progress
+				const newLives = state.lives - 1;
 				set({
-					score: Math.max(0, score - 1),
+					lives: newLives,
 					combo: 0,
 					currentSnowman: { ...initialSnowman },
 					items: state.items.filter((item) => item.id !== itemId),
+					isGameOver: newLives <= 0,
+					isPlaying: newLives > 0,
 				});
 			}
 		} else {
@@ -152,7 +155,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	setScore: (score) => set({ score }),
 	setCombo: (combo) => set({ combo }),
-	setTimeRemaining: (timeRemaining) => set({ timeRemaining }),
+	setLives: (lives) => set({ lives }),
 	setIsPlaying: (isPlaying) => set({ isPlaying }),
 	setIsGameOver: (isGameOver) => set({ isGameOver }),
 	resetCurrentSnowman: () => set({ currentSnowman: { ...initialSnowman } }),
@@ -164,7 +167,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	resetGame: () =>
 		set({
 			score: 0,
-			timeRemaining: 60,
+			lives: 5,
 			isPlaying: false,
 			isGameOver: false,
 			currentSnowman: { ...initialSnowman },
@@ -176,7 +179,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	startGame: () =>
 		set({
 			score: 0,
-			timeRemaining: 60,
+			lives: 5,
 			isPlaying: true,
 			isGameOver: false,
 			currentSnowman: { ...initialSnowman },
