@@ -16,9 +16,9 @@ export const WalletConnection = () => {
 			) : null}
 			<button
 				onClick={() => open({ view: isConnected ? "Account" : "Connect" })}
-				className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
+				className="px-2 sm:px-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
 			>
-				{isConnected ? "Wallet" : "Connect"}
+				{isConnected ? "View Wallet" : "Connect Wallet"}
 			</button>
 		</div>
 	);

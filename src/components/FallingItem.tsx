@@ -11,14 +11,13 @@ const FallingItemComponent = ({ item, onCollect }: FallingItemProps) => {
 
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		// Always allow clicking, but visual feedback when in zone
 		onCollect();
 	};
 
 	return (
 		<div
 			onClick={handleClick}
-			className="absolute transition-all duration-75 select-none cursor-pointer hover:scale-110 active:scale-95"
+			className="absolute transition-all duration-75 select-none cursor-pointer "
 			style={{
 				left: `${item.x}%`,
 				top: `${item.y}%`,
@@ -32,16 +31,12 @@ const FallingItemComponent = ({ item, onCollect }: FallingItemProps) => {
 			<div
 				className={`${
 					isInCollectionZone
-						? "scale-125 drop-shadow-2xl animate-bounce"
-						: "drop-shadow-lg hover:scale-110"
+						? "scale-100 drop-shadow-2xl animate-bounce"
+						: "drop-shadow-lg "
 				} transition-all duration-300`}
 			>
 				{ITEM_EMOJIS[item.type]}
 			</div>
-			{/* Visual indicator when clickable */}
-			{!isInCollectionZone && (
-				<div className="absolute -top-2 -right-2 w-3 h-3 bg-blue-500 rounded-full opacity-50 animate-pulse" />
-			)}
 		</div>
 	);
 };

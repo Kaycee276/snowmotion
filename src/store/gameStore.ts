@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import type { ItemType, FallingItem, GameState } from "../types/game";
 import type { DifficultyLevel } from "../types/difficulty";
-import { SNOWMAN_ORDER, INITIAL_LIVES, WRONG_ITEM_PENALTY } from "../types/game";
+import {
+	SNOWMAN_ORDER,
+	INITIAL_LIVES,
+	WRONG_ITEM_PENALTY,
+	TIMER_DURATION,
+} from "../types/game";
 
 interface GameStore extends GameState {
 	items: FallingItem[];
@@ -55,7 +60,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	items: [],
 	itemIdCounter: 0,
 	difficulty: "medium",
-	timerSeconds: 30,
+	timerSeconds: TIMER_DURATION,
 	timerActive: false,
 	lifeLossEffect: false,
 
@@ -80,15 +85,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	collectItem: (itemId, itemType) => {
 		const state = get();
 
-		// Check if item exists (prevent double collection)
 		const itemExists = state.items.some((item) => item.id === itemId);
 		if (!itemExists) {
-			return; // Item already collected
+			return;
 		}
 
 		const { currentSnowman, score, combo } = state;
 
-		// Find what item we need next
 		const expectedNextIndex = SNOWMAN_ORDER.findIndex(
 			(_type, index) =>
 				!currentSnowman[SNOWMAN_ORDER[index] as keyof typeof currentSnowman]
@@ -98,55 +101,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			const expectedNextType = SNOWMAN_ORDER[expectedNextIndex];
 
 			if (itemType === expectedNextType) {
-				// Correct item!
 				const newSnowman = { ...currentSnowman, [itemType]: true };
 				const isComplete = SNOWMAN_ORDER.every(
 					(type) => newSnowman[type as keyof typeof newSnowman]
 				);
 
 				if (isComplete) {
-					// Complete snowman! Calculate score immediately
-					// Base score: +1 for complete snowman
 					let pointsToAdd = 1;
 
-					// Bonus point for scarf
 					const hasScarf = newSnowman.scarf;
 					if (hasScarf) {
-						pointsToAdd += 1; // Bonus point for scarf
-						console.log("🎉 Scarf bonus applied! +1 extra point");
+						pointsToAdd += 1;
 					}
 
 					const newScore = score + pointsToAdd;
 					const newCombo = combo + 1;
 
-					console.log(
-						`✅ Snowman complete! Score: ${score} → ${newScore} (added ${pointsToAdd} points)`
-					);
-
-					// Update all state atomically - score FIRST, then reset snowman
 					set({
-						score: newScore, // Update score immediately
+						score: newScore,
 						combo: newCombo,
-						currentSnowman: { ...initialSnowman }, // Reset for next snowman
-						items: state.items.filter((item) => item.id !== itemId), // Remove collected item
-						timerSeconds: state.timerSeconds + 15, // Add 15 seconds
+						currentSnowman: { ...initialSnowman },
+						items: state.items.filter((item) => item.id !== itemId),
+						timerSeconds: state.timerSeconds + 15,
 					});
 				} else {
-					// Partial progress - update snowman and remove item
 					set({
 						currentSnowman: newSnowman,
 						items: state.items.filter((item) => item.id !== itemId),
 					});
 				}
 			} else if (itemType === "scarf") {
-				// Scarf can be collected anytime as bonus
 				set({
 					currentSnowman: { ...currentSnowman, scarf: true },
 					items: state.items.filter((item) => item.id !== itemId),
 				});
 			} else {
-				// Wrong item - subtract time and reset progress
-				const newTimerSeconds = Math.max(0, state.timerSeconds - WRONG_ITEM_PENALTY);
+				const newTimerSeconds = Math.max(
+					0,
+					state.timerSeconds - WRONG_ITEM_PENALTY
+				);
 				set({
 					combo: 0,
 					currentSnowman: { ...initialSnowman },
@@ -154,11 +147,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					timerSeconds: newTimerSeconds,
 					lifeLossEffect: true,
 				});
-				// Reset effect after animation
 				setTimeout(() => set({ lifeLossEffect: false }), 1000);
 			}
 		} else {
-			// All items collected but something went wrong - just remove item
 			set({
 				items: state.items.filter((item) => item.id !== itemId),
 			});
@@ -176,7 +167,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			currentSnowman: { ...state.currentSnowman, [part]: value },
 		})),
 
-	startTimer: () => set({ timerSeconds: 30, timerActive: true }),
+	startTimer: () => set({ timerSeconds: TIMER_DURATION, timerActive: true }),
 
 	decrementTimer: () => {
 		const state = get();
@@ -188,32 +179,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			const newLives = state.lives - 1;
 			set({
 				lives: newLives,
-				timerSeconds: 30,
+				timerSeconds: TIMER_DURATION,
 				timerActive: newLives > 0,
 				isGameOver: newLives <= 0,
 				isPlaying: newLives > 0,
 				lifeLossEffect: true,
 			});
-			// Reset effect after animation
 			setTimeout(() => set({ lifeLossEffect: false }), 1000);
 		} else {
 			set({ timerSeconds: newSeconds });
 		}
 	},
 
-	resetTimer: () => set({ timerSeconds: 30, timerActive: false }),
+	resetTimer: () => set({ timerSeconds: TIMER_DURATION, timerActive: false }),
 
 	resetGame: () =>
 		set({
 			score: 0,
-			lives: 5,
+			lives: INITIAL_LIVES,
 			isPlaying: false,
 			isGameOver: false,
 			currentSnowman: { ...initialSnowman },
 			combo: 0,
 			items: [],
 			itemIdCounter: 0,
-			timerSeconds: 30,
+			timerSeconds: TIMER_DURATION,
 			timerActive: false,
 			lifeLossEffect: false,
 		}),
@@ -221,14 +211,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	startGame: () =>
 		set({
 			score: 0,
-			lives: 5,
+			lives: INITIAL_LIVES,
 			isPlaying: true,
 			isGameOver: false,
 			currentSnowman: { ...initialSnowman },
 			combo: 0,
 			items: [],
 			itemIdCounter: 0,
-			timerSeconds: 30,
+			timerSeconds: TIMER_DURATION,
 			timerActive: true,
 			lifeLossEffect: false,
 		}),
@@ -249,7 +239,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		if (expectedNextIndex !== -1) {
 			return SNOWMAN_ORDER[expectedNextIndex];
 		}
-		return null; // All items collected
+		return null;
 	},
 
 	setDifficulty: (difficulty) => set({ difficulty }),

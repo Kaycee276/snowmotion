@@ -96,10 +96,17 @@ const GameOverModal = ({
 				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">
 					Game Over! 🎉
 				</h2>
+
 				<div className="text-4xl sm:text-6xl font-bold text-gray-800 mb-4">
 					{score}
 				</div>
 				<p className="text-gray-700 mb-4">Final Score</p>
+
+				{!isConnected && (
+					<p className="text-red-500">
+						Connect wallet to submit score to leader board
+					</p>
+				)}
 
 				{!isSubmitted ? (
 					<>
@@ -179,8 +186,3 @@ const GameOverModal = ({
 };
 
 export default GameOverModal;
-
-// Allow users to change difficulty in the gameovermodal only after submitting also create a separete div for the timer so that it can be seen very well and add a very noticable effect to it when timer is low(>= 5secs)
-// Also when the user loses a life add a very noticable visual effect
-
-// also give a well detailed explanation of the game at the start of the game

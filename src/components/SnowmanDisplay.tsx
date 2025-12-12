@@ -19,25 +19,17 @@ const SnowmanDisplay = ({ currentSnowman }: SnowmanDisplayProps) => {
 					<div className="flex flex-col items-center gap-2 text-4xl">
 						{/* Hat */}
 						{currentSnowman.hat ? (
-							<div className="animate-bounce">{ITEM_EMOJIS.hat}</div>
+							<div>{ITEM_EMOJIS.hat}</div>
 						) : (
 							<div className="opacity-20">🎩</div>
 						)}
 
 						{/* Scarf (optional, wraps around) */}
-						{currentSnowman.scarf && (
-							<div className="animate-pulse">{ITEM_EMOJIS.scarf}</div>
-						)}
+						{currentSnowman.scarf && <div>{ITEM_EMOJIS.scarf}</div>}
 
 						{/* Head with face */}
 						<div className="relative">
-							<div
-								className={
-									currentSnowman.snowball ? "animate-pulse" : "opacity-20"
-								}
-							>
-								{ITEM_EMOJIS.snowball}
-							</div>
+							<div>{ITEM_EMOJIS.snowball}</div>
 							{/* Eyes */}
 							{currentSnowman.coal && (
 								<div className="absolute top-2 left-1/2 transform -translate-x-1/2 flex gap-4">
