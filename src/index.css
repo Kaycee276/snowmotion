@@ -74,8 +74,13 @@ button {
 	display: none;
 }
 
-::-moz-scrollbar {
-	display: none;
+/* Remove scrollbar for firefox */
+html {
+	scrollbar-width: none;
+}
+
+* {
+	scrollbar-width: none;
 }
 
 /* Prevent any scrolling */

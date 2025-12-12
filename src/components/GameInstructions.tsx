@@ -1,10 +1,16 @@
 interface GameInstructionsProps {
-	onStart: () => void;
+	onStart?: () => void;
+	onClose?: () => void;
+	showStartButton?: boolean;
 }
 
-const GameInstructions = ({ onStart }: GameInstructionsProps) => {
+const GameInstructions = ({
+	onStart,
+	onClose,
+	showStartButton = true,
+}: GameInstructionsProps) => {
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-100">
+		<div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-110">
 			<div className="bg-white rounded-2xl p-6 max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
 				<h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
 					❄️ SnowMotion Game Guide
@@ -51,7 +57,6 @@ const GameInstructions = ({ onStart }: GameInstructionsProps) => {
 						<ul className="list-disc list-inside space-y-1">
 							<li>Items fall from the sky automatically</li>
 							<li>Click/tap items to collect them manually</li>
-							<li>Items auto-collect in the yellow zone at bottom</li>
 							<li>Follow the building order to avoid time penalties</li>
 						</ul>
 					</div>
@@ -98,19 +103,29 @@ const GameInstructions = ({ onStart }: GameInstructionsProps) => {
 							<li>Watch the "Next:" indicator to see what item you need</li>
 							<li>Collect scarves anytime for bonus points</li>
 							<li>Build snowmen quickly to get more time</li>
-							<li>Items auto-collect in the yellow zone at bottom</li>
 							<li>Avoid wrong items - they cost you 10 seconds!</li>
 							<li>Connect your wallet to submit scores to the blockchain!</li>
 						</ul>
 					</div>
 				</div>
 
-				<button
-					onClick={onStart}
-					className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-xl transition-colors"
-				>
-					Start Playing! 🎮
-				</button>
+				<div className="sticky bottom-0 left-0 right-0 mt-6 bg-white">
+					{showStartButton ? (
+						<button
+							onClick={onStart}
+							className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-xl transition-colors"
+						>
+							Start Playing! 🎮
+						</button>
+					) : (
+						<button
+							onClick={onClose}
+							className="w-full mt-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-6 rounded-lg text-xl transition-colors"
+						>
+							Close ✖️
+						</button>
+					)}
+				</div>
 			</div>
 		</div>
 	);

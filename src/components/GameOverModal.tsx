@@ -10,6 +10,7 @@ interface GameOverModalProps {
 	difficulty: DifficultyLevel;
 	onRestart: () => void;
 	onShowLeaderboard: () => void;
+	onShowInstructions: () => void;
 }
 
 interface LeaderboardEntry {
@@ -24,6 +25,7 @@ const GameOverModal = ({
 	difficulty,
 	onRestart,
 	onShowLeaderboard,
+	onShowInstructions,
 }: GameOverModalProps) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSubmitted, setIsSubmitted] = useState(false);
@@ -92,7 +94,14 @@ const GameOverModal = ({
 
 	return (
 		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-100 overflow-hidden">
-			<div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md mx-2 text-center shadow-2xl max-h-[95vh] overflow-hidden">
+			<div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md mx-2 text-center shadow-2xl max-h-[95vh] overflow-hidden relative">
+				<button
+					onClick={onShowInstructions}
+					className="absolute top-2 right-2 bg-blue-100 hover:bg-blue-200 text-blue-600 p-2 rounded-xl transition-colors"
+					title="View Instructions"
+				>
+					❓
+				</button>
 				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">
 					Game Over! 🎉
 				</h2>
@@ -106,6 +115,18 @@ const GameOverModal = ({
 					<p className="text-red-500">
 						Connect wallet to submit score to leader board
 					</p>
+				)}
+
+				{isConnected && (
+					<div className="mb-3 text-sm text-gray-600">
+						Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+						<button
+							onClick={connect}
+							className="ml-2 text-blue-600 hover:text-blue-800 underline"
+						>
+							Change Wallet
+						</button>
+					</div>
 				)}
 
 				{!isSubmitted ? (
@@ -165,7 +186,7 @@ const GameOverModal = ({
 					</div>
 				)}
 
-				<div className="flex gap-2">
+				<div className="flex gap-2 ">
 					<button
 						onClick={onRestart}
 						disabled={isSubmitting}
@@ -173,6 +194,7 @@ const GameOverModal = ({
 					>
 						Play Again
 					</button>
+
 					<button
 						onClick={onShowLeaderboard}
 						className="bg-gray-300 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors"

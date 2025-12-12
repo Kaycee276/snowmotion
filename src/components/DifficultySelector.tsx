@@ -4,11 +4,13 @@ import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
 interface DifficultySelectorProps {
 	onStart: () => void;
 	onShowLeaderboard: () => void;
+	onShowInstructions: () => void;
 }
 
 const DifficultySelector = ({
 	onStart,
 	onShowLeaderboard,
+	onShowInstructions,
 }: DifficultySelectorProps) => {
 	const { difficulty, setDifficulty } = useGameStore();
 
@@ -16,14 +18,22 @@ const DifficultySelector = ({
 
 	return (
 		<div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-20 overflow-hidden">
-			<div className="bg-white rounded-2xl p-4 sm:p-6 gap-3 flex flex-col max-w-sm sm:max-w-2xl max-h-[95vh] mx-2 text-center shadow-2xl overflow-hidden">
+			<div className="bg-white rounded-2xl p-4 sm:p-6 gap-3 flex flex-col max-w-sm sm:max-w-2xl max-h-[95vh] mx-2 text-center shadow-2xl overflow-hidden relative">
+				<button
+					onClick={onShowInstructions}
+					className="absolute top-2 right-2 bg-blue-100 hover:bg-blue-200 text-blue-600 p-2 rounded-xl transition-colors"
+					title="View Instructions"
+				>
+					❓
+				</button>
 				<h1 className="text-2xl sm:text-4xl font-bold mb-2 text-blue-600">
 					❄️ SnowMotion
 				</h1>
 				<p className="text-gray-700 mb-3 sm:mb-6 text-xs sm:text-base">
 					Collect items in order to build snowmen!
 					<br />
-					❄️ → ⚫ → 🥕 → 🎩 (+ 🧣 for bonus)
+					❄️ → ⚫ → 🥕 → 🎩 (+ 🧣 for bonus) <br /> View Instructions at top
+					right corner
 				</p>
 
 				<div className="mb-4 sm:mb-6">
@@ -63,9 +73,10 @@ const DifficultySelector = ({
 					>
 						Start Game
 					</button>
+
 					<button
 						onClick={onShowLeaderboard}
-						className="bg-gray-200 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold hover:bg-gray-300 transition-colors"
+						className="bg-gray-200 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold hover:bg-gray-300 transition-colors flex-1"
 					>
 						View Leaderboard 🏆
 					</button>

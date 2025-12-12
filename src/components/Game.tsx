@@ -7,7 +7,7 @@ import GameOverModal from "./GameOverModal";
 import Leaderboard from "./Leaderboard";
 import DifficultySelector from "./DifficultySelector";
 import Timer from "./Timer";
-// import GameInstructions from "./GameInstructions";
+import GameInstructions from "./GameInstructions";
 import { useGameStore } from "../store/gameStore";
 import { getSmartSpawnItem } from "../utils/smartSpawn";
 import { DIFFICULTY_CONFIGS } from "../types/difficulty";
@@ -37,6 +37,7 @@ const Game = () => {
 	const gameLoopRef = useRef<number | null>(null);
 	const countdownTimerRef = useRef<number | null>(null);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
+	const [showInstructions, setShowInstructions] = useState(false);
 
 	const createAndSpawnItem = useCallback(() => {
 		const state = useGameStore.getState();
@@ -247,11 +248,20 @@ const Game = () => {
 				))}
 			</div>
 
+			{/* Game Instructions */}
+			{showInstructions && (
+				<GameInstructions 
+					onClose={() => setShowInstructions(false)}
+					showStartButton={false}
+				/>
+			)}
+
 			{/* Difficulty Selector / Start Screen */}
 			{!isPlaying && !isGameOver && (
 				<DifficultySelector
 					onStart={handleStartGame}
 					onShowLeaderboard={() => setShowLeaderboard(true)}
+					onShowInstructions={() => setShowInstructions(true)}
 				/>
 			)}
 
@@ -262,6 +272,7 @@ const Game = () => {
 					onRestart={handleRestart}
 					difficulty={difficulty}
 					onShowLeaderboard={() => setShowLeaderboard(true)}
+					onShowInstructions={() => setShowInstructions(true)}
 				/>
 			)}
 
