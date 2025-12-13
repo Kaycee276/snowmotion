@@ -3,6 +3,7 @@ const cors = require("cors");
 const { ethers } = require("ethers");
 const crypto = require("crypto");
 const supabase = require("./services/supabase");
+const { CONTRACT_ABI } = require("./services/abi");
 require("dotenv").config();
 
 const app = express();
@@ -28,12 +29,6 @@ app.use(express.json());
 // Initialize wallet and provider
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.GAME_SIGNING_KEY, provider);
-
-// Contract ABI (minimal)
-const CONTRACT_ABI = [
-	"function submitScore(address player, uint256 score, uint8 difficulty, uint256 timestamp, uint256 nonce, bytes32 gameHash, bytes signature) external",
-	"function verifyBackendSigner() external view returns (address)",
-];
 
 const contract = new ethers.Contract(
 	process.env.CONTRACT_ADDRESS,

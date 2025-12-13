@@ -1,5 +1,5 @@
 {
-  "name": "snowmotion-backend",
+  "name": "@snowmotion/backend",
   "version": "1.0.0",
   "description": "Backend API for SnowMotion game score verification",
   "main": "server.js",
