@@ -20,17 +20,20 @@ export const useWeb3 = () => {
 	}, [open]);
 
 	const submitScore = useCallback(
-		async (score: number): Promise<string | null> => {
+		async (score: number, difficulty: number, gameHash: string): Promise<string> => {
 			if (!address || !isConnected) {
 				throw new Error("Wallet not connected");
 			}
 
 			try {
-				// TODO: Implement actual smart contract interaction
-				// Simulate transaction for demo
-				void score;
-				await new Promise((resolve) => setTimeout(resolve, 1500));
-				return `0x${Math.random().toString(16).slice(2, 66)}`;
+				const { gameApi } = await import('../services/gameApi');
+				const result = await gameApi.submitScore({
+					player: address,
+					score,
+					difficulty,
+					gameHash
+				});
+				return result.txHash;
 			} catch (error) {
 				console.error("Error submitting score:", error);
 				throw error instanceof Error

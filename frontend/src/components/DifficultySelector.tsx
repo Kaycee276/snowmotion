@@ -1,5 +1,7 @@
 import { useGameStore } from "../store/gameStore";
 import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { useEffect } from "react";
 
 interface DifficultySelectorProps {
 	onStart: () => void;
@@ -12,7 +14,14 @@ const DifficultySelector = ({
 	onShowLeaderboard,
 	onShowInstructions,
 }: DifficultySelectorProps) => {
-	const { difficulty, setDifficulty } = useGameStore();
+	const { difficulty, setDifficulty, setConnectedAddress } = useGameStore();
+	const { open } = useAppKit();
+	const { address, isConnected } = useAppKitAccount();
+
+	// Update global connected address when wallet connection changes
+	useEffect(() => {
+		setConnectedAddress(address || null);
+	}, [address, setConnectedAddress]);
 
 	const difficultyLevels: DifficultyLevel[] = ["easy", "medium", "hard"];
 
@@ -66,10 +75,36 @@ const DifficultySelector = ({
 					</div>
 				</div>
 
+				{/* Wallet Connection */}
+				{!isConnected ? (
+					<div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+						<p className="text-sm text-yellow-800 mb-2">
+							Connect your wallet to play and submit scores
+						</p>
+						<button
+							onClick={() => open()}
+							className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+						>
+							Connect Wallet
+						</button>
+					</div>
+				) : (
+					<div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+						<p className="text-sm text-green-800">
+							✓ Wallet Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+						</p>
+					</div>
+				)}
+
 				<div className="flex flex-col gap-2">
 					<button
 						onClick={onStart}
-						className="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold hover:bg-blue-700 transition-colors"
+						disabled={!isConnected}
+						className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold transition-colors ${
+							isConnected
+								? "bg-blue-600 text-white hover:bg-blue-700"
+								: "bg-gray-300 text-gray-500 cursor-not-allowed"
+						}`}
 					>
 						Start Game
 					</button>

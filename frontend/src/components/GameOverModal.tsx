@@ -72,7 +72,13 @@ const GameOverModal = ({
 		setError(null);
 
 		try {
-			const hash = await submitScore(score);
+			const gameHash = useGameStore.getState().gameHash;
+			if (!gameHash) {
+				throw new Error('No game session found');
+			}
+			
+			const difficultyMap = { easy: 0, medium: 1, hard: 2 };
+			const hash = await submitScore(score, difficultyMap[difficulty], gameHash);
 			setTxHash(hash);
 
 			// Save to localStorage as backup/for demo
@@ -153,8 +159,15 @@ const GameOverModal = ({
 						<div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg mb-3">
 							<div className="font-semibold text-sm">✓ Score submitted!</div>
 							{txHash && (
-								<div className="text-xs mt-1 break-all">
-									Tx: {txHash.slice(0, 8)}...{txHash.slice(-6)}
+								<div className="text-xs mt-1">
+									<a 
+										href={`https://explorer.somnia.network/tx/${txHash}`}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-blue-600 hover:text-blue-800 underline"
+									>
+										Tx: {txHash.slice(0, 8)}...{txHash.slice(-6)}
+									</a>
 								</div>
 							)}
 						</div>

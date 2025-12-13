@@ -38,6 +38,7 @@ const Game = () => {
 	const countdownTimerRef = useRef<number | null>(null);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
 	const [showInstructions, setShowInstructions] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const createAndSpawnItem = useCallback(() => {
 		const state = useGameStore.getState();
@@ -166,13 +167,29 @@ const Game = () => {
 		};
 	}, [timerActive, isPlaying, decrementTimer]);
 
-	const handleStartGame = () => {
-		startGame();
+	const handleStartGame = async () => {
+		setErrorMessage(null);
+		try {
+			await startGame();
+		} catch {
+			setErrorMessage(
+				"Failed to start game. Please connect your wallet first."
+			);
+			setTimeout(() => setErrorMessage(null), 5000);
+		}
 	};
 
-	const handleRestart = () => {
+	const handleRestart = async () => {
+		setErrorMessage(null);
 		resetGame();
-		startGame();
+		try {
+			await startGame();
+		} catch {
+			setErrorMessage(
+				"Failed to start game. Please connect your wallet first."
+			);
+			setTimeout(() => setErrorMessage(null), 5000);
+		}
 	};
 
 	const nextNeededItem = getNextNeededItem();
@@ -188,6 +205,13 @@ const Game = () => {
 				height: "100vh",
 			}}
 		>
+			{/* Error Message */}
+			{errorMessage && (
+				<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg max-w-md">
+					<p className="text-sm font-medium">{errorMessage}</p>
+				</div>
+			)}
+
 			{/* Game UI - Responsive */}
 			<div className="absolute top-1 sm:top-2 left-1 sm:left-2 right-1 sm:right-2 z-10 flex flex-col sm:flex-row justify-between items-start gap-1 sm:gap-2">
 				{/* Score & Combo */}
@@ -250,7 +274,7 @@ const Game = () => {
 
 			{/* Game Instructions */}
 			{showInstructions && (
-				<GameInstructions 
+				<GameInstructions
 					onClose={() => setShowInstructions(false)}
 					showStartButton={false}
 				/>

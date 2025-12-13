@@ -7,6 +7,7 @@ import {
 	WRONG_ITEM_PENALTY,
 	TIMER_DURATION,
 } from "../types/game";
+import { gameApi } from "../services/gameApi";
 
 interface GameStore extends GameState {
 	items: FallingItem[];
@@ -15,6 +16,9 @@ interface GameStore extends GameState {
 	timerSeconds: number;
 	timerActive: boolean;
 	lifeLossEffect: boolean;
+	gameHash: string | null;
+	playerNonce: number;
+	connectedAddress: string | null;
 	// Actions
 	spawnItem: (item: FallingItem) => void;
 	removeItem: (id: string) => void;
@@ -39,6 +43,7 @@ interface GameStore extends GameState {
 	decrementTimer: () => void;
 	resetTimer: () => void;
 	setLifeLossEffect: (effect: boolean) => void;
+	setConnectedAddress: (address: string | null) => void;
 }
 
 const initialSnowman = {
@@ -63,6 +68,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	timerSeconds: TIMER_DURATION,
 	timerActive: false,
 	lifeLossEffect: false,
+	gameHash: null,
+	playerNonce: 0,
+	connectedAddress: null,
 
 	// Actions
 	spawnItem: (item) =>
@@ -122,7 +130,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 						combo: newCombo,
 						currentSnowman: { ...initialSnowman },
 						items: state.items.filter((item) => item.id !== itemId),
-						timerSeconds: state.timerSeconds + 15,
+						timerSeconds: Math.min(state.timerSeconds + 15, 60),
 					});
 				} else {
 					set({
@@ -206,22 +214,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			timerSeconds: TIMER_DURATION,
 			timerActive: false,
 			lifeLossEffect: false,
+			gameHash: null,
 		}),
 
-	startGame: () =>
-		set({
-			score: 0,
-			lives: INITIAL_LIVES,
-			isPlaying: true,
-			isGameOver: false,
-			currentSnowman: { ...initialSnowman },
-			combo: 0,
-			items: [],
-			itemIdCounter: 0,
-			timerSeconds: TIMER_DURATION,
-			timerActive: true,
-			lifeLossEffect: false,
-		}),
+	startGame: async (walletAddress?: string) => {
+		try {
+			const address = walletAddress || get().connectedAddress;
+			if (!address) {
+				throw new Error('Wallet address required to start game');
+			}
+			
+			const session = await gameApi.startGame(address);
+			
+			set({
+				score: 0,
+				lives: INITIAL_LIVES,
+				isPlaying: true,
+				isGameOver: false,
+				currentSnowman: { ...initialSnowman },
+				combo: 0,
+				items: [],
+				itemIdCounter: 0,
+				timerSeconds: TIMER_DURATION,
+				timerActive: true,
+				lifeLossEffect: false,
+				gameHash: session.gameHash,
+			});
+		} catch (error) {
+			console.error('Failed to start game:', error);
+			throw error;
+		}
+	},
 
 	getNextItemId: () => {
 		const counter = get().itemIdCounter;
@@ -245,4 +268,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	setDifficulty: (difficulty) => set({ difficulty }),
 
 	setLifeLossEffect: (effect) => set({ lifeLossEffect: effect }),
+
+	setConnectedAddress: (address) => set({ connectedAddress: address }),
 }));

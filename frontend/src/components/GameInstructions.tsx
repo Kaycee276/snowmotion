@@ -97,6 +97,21 @@ const GameInstructions = ({
 
 					<div>
 						<h2 className="text-xl font-semibold text-blue-500 mb-2">
+							🏆 Leaderboard System
+						</h2>
+						<div className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-500">
+							<p className="text-sm mb-2"><strong>Fair Competition:</strong> Scores are normalized across difficulties</p>
+							<ul className="text-sm space-y-1">
+								<li>• <strong>Easy:</strong> 1x multiplier (raw score)</li>
+								<li>• <strong>Medium:</strong> 1.5x multiplier</li>
+								<li>• <strong>Hard:</strong> 2x multiplier</li>
+							</ul>
+							<p className="text-xs mt-2 text-purple-700">Example: 10 points on Hard = 20 leaderboard points</p>
+						</div>
+					</div>
+
+					<div>
+						<h2 className="text-xl font-semibold text-blue-500 mb-2">
 							💡 Pro Tips
 						</h2>
 						<ul className="list-disc list-inside space-y-1 text-sm">
