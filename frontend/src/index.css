@@ -84,30 +84,6 @@ button {
 	background: #FF007A;
 }
 
-/* Remove scrollbar for firefox */
-html {
-	scrollbar-width: none;
-}
-
-* {
-	scrollbar-width: none;
-}
-
-/* Prevent any scrolling */
-* {
-	overscroll-behavior: none;
-}
-
-/* Mobile viewport fix */
-@supports (-webkit-touch-callout: none) {
-	body {
-		height: -webkit-fill-available;
-	}
-	#root {
-		height: -webkit-fill-available;
-	}
-}
-
 @keyframes shake {
 	0%, 100% { transform: translateX(0); }
 	20%, 60% { transform: translateX(-8px); }
