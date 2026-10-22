@@ -13,6 +13,7 @@
     "@libsql/client": "^0.18.0",
     "@prisma/adapter-libsql": "^7.10.1",
     "@prisma/client": "^6.19.3",
+    "@stellar/stellar-sdk": "^17.3.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "ethers": "^6.8.1",

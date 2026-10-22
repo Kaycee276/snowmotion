@@ -4,6 +4,7 @@ const { ethers } = require("ethers");
 const crypto = require("crypto");
 const prisma = require("./services/prisma");
 const { CONTRACT_ABI } = require("./services/abi");
+const { submitScoreOnChain, getOnChainLeaderboard } = require("./services/stellar");
 require("dotenv").config();
 
 const app = express();
@@ -188,27 +189,17 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 			)
 		);
 
-		let signature = "verified";
 		let txHash = null;
-
-		if (wallet) {
-			signature = await wallet.signMessage(ethers.getBytes(messageHash));
-			if (contract && ethers.isAddress(player)) {
-				try {
-					const tx = await contract.submitScore(
-						player,
-						parsedScore,
-						parsedDifficulty,
-						timestamp,
-						nonce,
-						gameHash,
-						signature
-					);
-					txHash = tx.hash;
-				} catch (err) {
-					console.warn("Contract broadcast notice:", err.message);
-				}
-			}
+		try {
+			const onChainResult = await submitScoreOnChain({
+				player,
+				score: parsedScore,
+				difficulty: parsedDifficulty,
+				gameHash,
+			});
+			txHash = onChainResult.txHash;
+		} catch (chainErr) {
+			console.warn("Soroban on-chain score submission notice:", chainErr.message);
 		}
 
 		// Mark session as used in database using Prisma (Turso SQLite)
@@ -224,11 +215,13 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 
 		res.json({
 			success: true,
-			txHash: txHash || `tx-${gameHash.slice(0, 10)}-${nonce}`,
-			signature,
+			txHash: txHash || null,
+			signature: "verified",
 			timestamp,
 			nonce,
-			message: "Score verified and submitted to blockchain",
+			message: txHash
+				? "Score verified and submitted to Stellar blockchain"
+				: "Score verified and recorded",
 		});
 	} catch (error) {
 		console.error("Error submitting score:", error);
@@ -236,25 +229,16 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 	}
 });
 
-// Get leaderboard from contract (with Turso/Prisma fallback)
+// Get leaderboard from Soroban contract (with Turso/Prisma fallback)
 app.get("/api/leaderboard", async (req, res) => {
 	try {
-		if (contract) {
-			try {
-				const leaderboard = await contract.getLeaderboard();
-				const formattedLeaderboard = leaderboard.map((entry) => ({
-					address: entry.player,
-					score: Number(entry.score),
-					difficulty: Number(entry.difficulty),
-					timestamp: Number(entry.timestamp) * 1000,
-				}));
-				return res.json(formattedLeaderboard);
-			} catch (contractErr) {
-				console.warn("Contract call failed, falling back to database leaderboard:", contractErr.message);
-			}
+		// 1. Try on-chain Soroban contract first
+		const onChainLeaderboard = await getOnChainLeaderboard();
+		if (onChainLeaderboard && onChainLeaderboard.length > 0) {
+			return res.json(onChainLeaderboard);
 		}
 
-		// Fallback to Turso SQLite via Prisma
+		// 2. Fallback to Turso SQLite via Prisma
 		const sessions = await prisma.gameSession.findMany({
 			where: { isUsed: true, score: { not: null } },
 			orderBy: { score: "desc" },

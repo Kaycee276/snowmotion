@@ -165,16 +165,20 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 						<div className="text-sm font-black text-black uppercase mb-1.5">
 							VERIFIED & RECORDED ON-CHAIN
 						</div>
-						{txHash && (
+						{txHash && /^[a-fA-F0-9]{64}$/.test(txHash) ? (
 							<a
-								href={`https://stellar.expert/explorer/public/tx/${txHash}`}
+								href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-xs font-bold text-black underline break-all block"
+								className="text-xs font-bold text-black underline break-all block mt-2"
 							>
-								View On Stellar Explorer ↗
+								VIEW TRANSACTION ON STELLAR EXPERT ↗
 							</a>
-						)}
+						) : txHash ? (
+							<div className="text-[11px] font-mono text-black mt-1">
+								REF: {txHash}
+							</div>
+						) : null}
 					</div>
 				)}
 
