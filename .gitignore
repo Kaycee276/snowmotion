@@ -28,3 +28,9 @@ dist-ssr
 *.db-journal
 *.sqlite
 *.sqlite-journal
+
+# Rust build target
+contracts/target
+contracts/**/target
+.stellar
+.soroban
