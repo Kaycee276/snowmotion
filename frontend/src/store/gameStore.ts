@@ -1,13 +1,11 @@
 import { create } from "zustand";
 import type { ItemType, FallingItem, GameState } from "../types/game";
 import type { DifficultyLevel } from "../types/difficulty";
-import {
-	SNOWMAN_ORDER,
-	INITIAL_LIVES,
-	WRONG_ITEM_PENALTY,
-	TIMER_DURATION,
-} from "../types/game";
+import type { CharacterId } from "../types/character";
+import { CHARACTERS } from "../types/character";
+import { INITIAL_LIVES, WRONG_ITEM_PENALTY, TIMER_DURATION } from "../types/game";
 import { gameApi } from "../services/gameApi";
+import { sound } from "../utils/soundEffects";
 
 interface GameStore extends GameState {
 	items: FallingItem[];
@@ -16,10 +14,13 @@ interface GameStore extends GameState {
 	timerSeconds: number;
 	timerActive: boolean;
 	lifeLossEffect: boolean;
+	powerupMessage: string | null;
 	gameHash: string | null;
 	playerNonce: number;
 	connectedAddress: string | null;
+
 	// Actions
+	setSelectedCharacter: (characterId: CharacterId) => void;
 	spawnItem: (item: FallingItem) => void;
 	removeItem: (id: string) => void;
 	updateItemPosition: (id: string, y: number) => void;
@@ -30,29 +31,27 @@ interface GameStore extends GameState {
 	setIsPlaying: (isPlaying: boolean) => void;
 	setIsGameOver: (isGameOver: boolean) => void;
 	setDifficulty: (difficulty: DifficultyLevel) => void;
-	resetCurrentSnowman: () => void;
-	updateCurrentSnowman: (
-		part: keyof GameState["currentSnowman"],
-		value: boolean
-	) => void;
+	resetCharacterAssembly: () => void;
 	resetGame: () => void;
-	startGame: () => void;
+	startGame: (walletAddress?: string) => Promise<void>;
 	getNextItemId: () => string;
-	getNextNeededItem: () => ItemType | null;
+	getNextNeededItem: () => string | null;
 	startTimer: () => void;
 	decrementTimer: () => void;
 	resetTimer: () => void;
 	setLifeLossEffect: (effect: boolean) => void;
 	setConnectedAddress: (address: string | null) => void;
-}
+	tickBlizzard: () => void;
 
-const initialSnowman = {
-	snowball: false,
-	coal: false,
-	carrot: false,
-	hat: false,
-	scarf: false,
-};
+	// Backwards compatibility helpers
+	currentSnowman: {
+		snowball: boolean;
+		coal: boolean;
+		carrot: boolean;
+		hat: boolean;
+		scarf: boolean;
+	};
+}
 
 export const useGameStore = create<GameStore>((set, get) => ({
 	// Initial state
@@ -60,19 +59,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	lives: INITIAL_LIVES,
 	isPlaying: false,
 	isGameOver: false,
-	currentSnowman: { ...initialSnowman },
+	selectedCharacter: "snowman",
+	collectedParts: {},
 	combo: 0,
+	isBlizzardActive: false,
+	blizzardTimeLeft: 0,
 	items: [],
 	itemIdCounter: 0,
 	difficulty: "medium",
 	timerSeconds: TIMER_DURATION,
 	timerActive: false,
 	lifeLossEffect: false,
+	powerupMessage: null,
 	gameHash: null,
 	playerNonce: 0,
 	connectedAddress: null,
 
-	// Actions
+	get currentSnowman() {
+		const parts = get().collectedParts;
+		return {
+			snowball: Boolean(parts.snowball),
+			coal: Boolean(parts.coal),
+			carrot: Boolean(parts.carrot),
+			hat: Boolean(parts.hat),
+			scarf: Boolean(parts.scarf),
+		};
+	},
+
+	setSelectedCharacter: (characterId: CharacterId) => {
+		set({ selectedCharacter: characterId, collectedParts: {} });
+	},
+
 	spawnItem: (item) =>
 		set((state) => ({
 			items: [...state.items, item],
@@ -92,75 +109,129 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	collectItem: (itemId, itemType) => {
 		const state = get();
-
 		const itemExists = state.items.some((item) => item.id === itemId);
-		if (!itemExists) {
+		if (!itemExists) return;
+
+		// 1. Handle Special Power-ups & Hazards
+		if (itemType === "power_cocoa") {
+			sound.playPowerup();
+			const newTime = Math.min(state.timerSeconds + 8, 60);
+			const newLives = state.lives < INITIAL_LIVES ? state.lives + 1 : state.lives;
+			set({
+				timerSeconds: newTime,
+				lives: newLives,
+				powerupMessage: "+8s TIME BOOST! ☕",
+				items: state.items.filter((item) => item.id !== itemId),
+			});
+			setTimeout(() => set({ powerupMessage: null }), 2000);
 			return;
 		}
 
-		const { currentSnowman, score, combo } = state;
-
-		const expectedNextIndex = SNOWMAN_ORDER.findIndex(
-			(_type, index) =>
-				!currentSnowman[SNOWMAN_ORDER[index] as keyof typeof currentSnowman]
-		);
-
-		if (expectedNextIndex !== -1) {
-			const expectedNextType = SNOWMAN_ORDER[expectedNextIndex];
-
-			if (itemType === expectedNextType) {
-				const newSnowman = { ...currentSnowman, [itemType]: true };
-				const isComplete = SNOWMAN_ORDER.every(
-					(type) => newSnowman[type as keyof typeof newSnowman]
-				);
-
-				if (isComplete) {
-					let pointsToAdd = 1;
-
-					const hasScarf = newSnowman.scarf;
-					if (hasScarf) {
-						pointsToAdd += 1;
-					}
-
-					const newScore = score + pointsToAdd;
-					const newCombo = combo + 1;
-
-					set({
-						score: newScore,
-						combo: newCombo,
-						currentSnowman: { ...initialSnowman },
-						items: state.items.filter((item) => item.id !== itemId),
-						timerSeconds: Math.min(state.timerSeconds + 15, 60),
-					});
-				} else {
-					set({
-						currentSnowman: newSnowman,
-						items: state.items.filter((item) => item.id !== itemId),
-					});
-				}
-			} else if (itemType === "scarf") {
-				set({
-					currentSnowman: { ...currentSnowman, scarf: true },
-					items: state.items.filter((item) => item.id !== itemId),
-				});
-			} else {
-				const newTimerSeconds = Math.max(
-					0,
-					state.timerSeconds - WRONG_ITEM_PENALTY
-				);
-				set({
-					combo: 0,
-					currentSnowman: { ...initialSnowman },
-					items: state.items.filter((item) => item.id !== itemId),
-					timerSeconds: newTimerSeconds,
-					lifeLossEffect: true,
-				});
-				setTimeout(() => set({ lifeLossEffect: false }), 1000);
-			}
-		} else {
+		if (itemType === "power_blizzard") {
+			sound.playPowerup();
 			set({
+				isBlizzardActive: true,
+				blizzardTimeLeft: 6,
+				powerupMessage: "BLIZZARD FREEZE! 🧊",
 				items: state.items.filter((item) => item.id !== itemId),
 			});
+			setTimeout(() => set({ powerupMessage: null }), 2000);
+			return;
+		}
+
+		if (itemType === "power_star") {
+			sound.playPowerup();
+			const newScore = state.score + 3;
+			const newCombo = state.combo + 1;
+			sound.playCombo(newCombo);
+			set({
+				score: newScore,
+				combo: newCombo,
+				powerupMessage: "+3 GOLDEN STAR! ⭐",
+				items: state.items.filter((item) => item.id !== itemId),
+			});
+			setTimeout(() => set({ powerupMessage: null }), 2000);
+			return;
+		}
+
+		if (itemType === "hazard_spike") {
+			sound.playHazard();
+			const newLives = state.lives - 1;
+			set({
+				lives: newLives,
+				combo: 0,
+				lifeLossEffect: true,
+				powerupMessage: "HAZARD HIT! -1 LIFE 💥",
+				items: state.items.filter((item) => item.id !== itemId),
+				isGameOver: newLives <= 0,
+				isPlaying: newLives > 0,
+			});
+			if (newLives <= 0) sound.playGameOver();
+			setTimeout(() => {
+				set({ lifeLossEffect: false, powerupMessage: null });
+			}, 1500);
+			return;
+		}
+
+		// 2. Handle Character Parts
+		const charConfig = CHARACTERS[state.selectedCharacter] || CHARACTERS.snowman;
+		const { requiredParts, bonusPart } = charConfig;
+		const nextNeeded = state.getNextNeededItem();
+
+		if (itemType === nextNeeded) {
+			sound.playCatch();
+			const updatedCollected = { ...state.collectedParts, [itemType]: true };
+			const isComplete = requiredParts.every((part) => updatedCollected[part]);
+
+			if (isComplete) {
+				// Completed the full character!
+				sound.playComplete();
+				let pointsToAdd = 2;
+				if (updatedCollected[bonusPart]) {
+					pointsToAdd += 2; // Bonus points for equipped accessory
+				}
+				const newCombo = state.combo + 1;
+				sound.playCombo(newCombo);
+
+				set({
+					score: state.score + pointsToAdd,
+					combo: newCombo,
+					collectedParts: {},
+					items: state.items.filter((item) => item.id !== itemId),
+					timerSeconds: Math.min(state.timerSeconds + 12, 60),
+					powerupMessage: `${charConfig.name} COMPLETED! +${pointsToAdd} 🏆`,
+				});
+				setTimeout(() => set({ powerupMessage: null }), 2000);
+			} else {
+				set({
+					collectedParts: updatedCollected,
+					items: state.items.filter((item) => item.id !== itemId),
+				});
+			}
+		} else if (itemType === bonusPart) {
+			// Collected the optional bonus part
+			sound.playCatch();
+			set({
+				collectedParts: { ...state.collectedParts, [bonusPart]: true },
+				powerupMessage: `BONUS ACCESSORY EQUIPPED! ✨`,
+				items: state.items.filter((item) => item.id !== itemId),
+			});
+			setTimeout(() => set({ powerupMessage: null }), 2000);
+		} else {
+			// Wrong item clicked!
+			sound.playWrong();
+			const newTimerSeconds = Math.max(0, state.timerSeconds - WRONG_ITEM_PENALTY);
+			set({
+				combo: 0,
+				collectedParts: {},
+				items: state.items.filter((item) => item.id !== itemId),
+				timerSeconds: newTimerSeconds,
+				lifeLossEffect: true,
+				powerupMessage: `WRONG ITEM! -${WRONG_ITEM_PENALTY}s ❌`,
+			});
+			setTimeout(() => {
+				set({ lifeLossEffect: false, powerupMessage: null });
+			}, 1000);
 		}
 	},
 
@@ -169,11 +240,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	setLives: (lives) => set({ lives }),
 	setIsPlaying: (isPlaying) => set({ isPlaying }),
 	setIsGameOver: (isGameOver) => set({ isGameOver }),
-	resetCurrentSnowman: () => set({ currentSnowman: { ...initialSnowman } }),
-	updateCurrentSnowman: (part, value) =>
-		set((state) => ({
-			currentSnowman: { ...state.currentSnowman, [part]: value },
-		})),
+	setDifficulty: (difficulty) => set({ difficulty }),
+	resetCharacterAssembly: () => set({ collectedParts: {} }),
 
 	startTimer: () => set({ timerSeconds: TIMER_DURATION, timerActive: true }),
 
@@ -181,21 +249,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		const state = get();
 		if (!state.timerActive) return;
 
+		// Play tick sound in final 5 seconds
+		if (state.timerSeconds <= 5 && state.timerSeconds > 0) {
+			sound.playTick();
+		}
+
 		const newSeconds = state.timerSeconds - 1;
 		if (newSeconds <= 0) {
-			// Timer expired - lose a life
+			sound.playHazard();
 			const newLives = state.lives - 1;
+			const isOver = newLives <= 0;
+			if (isOver) {
+				sound.playGameOver();
+			}
 			set({
 				lives: newLives,
 				timerSeconds: TIMER_DURATION,
-				timerActive: newLives > 0,
-				isGameOver: newLives <= 0,
-				isPlaying: newLives > 0,
+				timerActive: !isOver,
+				isGameOver: isOver,
+				isPlaying: !isOver,
 				lifeLossEffect: true,
+				collectedParts: {},
 			});
 			setTimeout(() => set({ lifeLossEffect: false }), 1000);
 		} else {
 			set({ timerSeconds: newSeconds });
+		}
+	},
+
+	tickBlizzard: () => {
+		const state = get();
+		if (state.isBlizzardActive) {
+			const nextTime = state.blizzardTimeLeft - 1;
+			if (nextTime <= 0) {
+				set({ isBlizzardActive: false, blizzardTimeLeft: 0 });
+			} else {
+				set({ blizzardTimeLeft: nextTime });
+			}
 		}
 	},
 
@@ -207,13 +297,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			lives: INITIAL_LIVES,
 			isPlaying: false,
 			isGameOver: false,
-			currentSnowman: { ...initialSnowman },
+			collectedParts: {},
 			combo: 0,
 			items: [],
 			itemIdCounter: 0,
 			timerSeconds: TIMER_DURATION,
 			timerActive: false,
 			lifeLossEffect: false,
+			isBlizzardActive: false,
+			blizzardTimeLeft: 0,
+			powerupMessage: null,
 			gameHash: null,
 		}),
 
@@ -221,27 +314,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		try {
 			const address = walletAddress || get().connectedAddress;
 			if (!address) {
-				throw new Error('Wallet address required to start game');
+				throw new Error("Wallet address required to start game");
 			}
-			
+
 			const session = await gameApi.startGame(address);
-			
+
 			set({
 				score: 0,
 				lives: INITIAL_LIVES,
 				isPlaying: true,
 				isGameOver: false,
-				currentSnowman: { ...initialSnowman },
+				collectedParts: {},
 				combo: 0,
 				items: [],
 				itemIdCounter: 0,
 				timerSeconds: TIMER_DURATION,
 				timerActive: true,
 				lifeLossEffect: false,
+				isBlizzardActive: false,
+				blizzardTimeLeft: 0,
+				powerupMessage: null,
 				gameHash: session.gameHash,
 			});
 		} catch (error) {
-			console.error('Failed to start game:', error);
+			console.error("Failed to start game:", error);
 			throw error;
 		}
 	},
@@ -253,21 +349,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	},
 
 	getNextNeededItem: () => {
-		const { currentSnowman } = get();
-		const expectedNextIndex = SNOWMAN_ORDER.findIndex(
-			(_type, index) =>
-				!currentSnowman[SNOWMAN_ORDER[index] as keyof typeof currentSnowman]
-		);
-
-		if (expectedNextIndex !== -1) {
-			return SNOWMAN_ORDER[expectedNextIndex];
-		}
-		return null;
+		const { selectedCharacter, collectedParts } = get();
+		const charConfig = CHARACTERS[selectedCharacter] || CHARACTERS.snowman;
+		const next = charConfig.requiredParts.find((part) => !collectedParts[part]);
+		return next || null;
 	},
 
-	setDifficulty: (difficulty) => set({ difficulty }),
-
 	setLifeLossEffect: (effect) => set({ lifeLossEffect: effect }),
-
 	setConnectedAddress: (address) => set({ connectedAddress: address }),
 }));

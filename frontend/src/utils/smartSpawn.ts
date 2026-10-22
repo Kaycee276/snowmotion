@@ -1,8 +1,11 @@
 import type { ItemType } from "../types/game";
 import type { DifficultyLevel } from "../types/difficulty";
+import type { CharacterId } from "../types/character";
+import { CHARACTERS } from "../types/character";
 
 interface SmartSpawnContext {
-	nextNeededItem: ItemType | null;
+	characterId: CharacterId;
+	nextNeededItem: string | null;
 	currentItems: ItemType[];
 	timerSeconds: number;
 	combo: number;
@@ -11,10 +14,11 @@ interface SmartSpawnContext {
 }
 
 /**
- * Advanced smart spawning algorithm that adapts based on game state
+ * Smart spawning algorithm that adapts based on selected character and game state
  */
 export const getSmartSpawnItem = (context: SmartSpawnContext): ItemType => {
 	const {
+		characterId,
 		nextNeededItem,
 		currentItems,
 		timerSeconds,
@@ -23,98 +27,87 @@ export const getSmartSpawnItem = (context: SmartSpawnContext): ItemType => {
 		lives,
 	} = context;
 
+	const charConfig = CHARACTERS[characterId] || CHARACTERS.snowman;
+	const requiredParts = charConfig.requiredParts;
+	const bonusPart = charConfig.bonusPart;
+
 	// Count existing items on screen
 	const itemCounts = currentItems.reduce((acc, item) => {
 		acc[item] = (acc[item] || 0) + 1;
 		return acc;
-	}, {} as Record<ItemType, number>);
+	}, {} as Record<string, number>);
 
 	// Base spawn chances by difficulty
 	const difficultyMultipliers = {
-		easy: { needed: 0.7, scarf: 0.15, wrong: 0.15 },
-		medium: { needed: 0.6, scarf: 0.2, wrong: 0.2 },
-		hard: { needed: 0.5, scarf: 0.25, wrong: 0.25 },
+		easy: { needed: 0.55, bonus: 0.15, wrong: 0.2, special: 0.1 },
+		medium: { needed: 0.45, bonus: 0.15, wrong: 0.25, special: 0.15 },
+		hard: { needed: 0.38, bonus: 0.15, wrong: 0.3, special: 0.17 },
 	};
 
-	let { needed, scarf, wrong } = difficultyMultipliers[difficulty];
+	let { needed, bonus, wrong, special } = difficultyMultipliers[difficulty];
 
-	// Adaptive adjustments based on game state
-
-	// 1. Timer pressure - increase needed item chance when time is low
-	if (timerSeconds <= 10) {
-		needed += 0.2;
-		wrong -= 0.1;
-		scarf -= 0.1;
-	}
-
-	// 2. Low lives - be more helpful
-	if (lives <= 2) {
+	// Dynamic adjustments based on pressure
+	if (timerSeconds <= 8) {
 		needed += 0.15;
-		wrong -= 0.15;
+		special += 0.05;
 	}
 
-	// 3. High combo - add more challenge
-	if (combo >= 3) {
-		needed -= 0.1;
-		wrong += 0.05;
-		scarf += 0.05;
+	if (lives <= 1) {
+		needed += 0.1;
+		special += 0.08;
 	}
 
-	// 4. Avoid flooding screen with same item type
-	if (nextNeededItem && itemCounts[nextNeededItem] >= 2) {
-		needed -= 0.2;
+	if (combo >= 4) {
 		wrong += 0.1;
-		scarf += 0.1;
 	}
 
-	// 5. Ensure scarf availability for bonus opportunities
-	if ((itemCounts.scarf || 0) === 0 && Math.random() < 0.3) {
-		scarf += 0.1;
-		needed -= 0.05;
-		wrong -= 0.05;
+	// Avoid excessive duplicates of the needed item
+	if (nextNeededItem && (itemCounts[nextNeededItem] || 0) >= 2) {
+		needed -= 0.2;
+		wrong += 0.15;
 	}
 
-	// Normalize probabilities
-	const total = needed + scarf + wrong;
+	const total = needed + bonus + wrong + special;
 	needed /= total;
-	scarf /= total;
+	bonus /= total;
 	wrong /= total;
+	special /= total;
 
-	const random = Math.random();
+	const rand = Math.random();
 
-	// Spawn based on calculated probabilities
-	if (nextNeededItem && random < needed) {
-		return nextNeededItem;
+	// 1. Needed Character Part
+	if (nextNeededItem && rand < needed) {
+		return nextNeededItem as ItemType;
 	}
 
-	if (random < needed + scarf) {
-		return "scarf";
+	// 2. Bonus Character Part
+	if (rand < needed + bonus) {
+		return bonusPart as ItemType;
 	}
 
-	// Spawn wrong item - choose intelligently
-	const allItems: ItemType[] = ["snowball", "carrot", "coal", "hat"];
-	const wrongItems = allItems.filter((item) => item !== nextNeededItem);
+	// 3. Special Power-up or Hazard
+	if (rand < needed + bonus + special) {
+		const specialRoll = Math.random();
+		// If low time or low life, favor Hot Cocoa
+		if (timerSeconds < 10 || lives <= 1) {
+			if (specialRoll < 0.5) return "power_cocoa";
+			if (specialRoll < 0.75) return "power_blizzard";
+			return "power_star";
+		}
 
-	// Prefer items that aren't already flooding the screen
-	const availableWrongItems = wrongItems.filter(
-		(item) => (itemCounts[item] || 0) < 2
-	);
+		if (specialRoll < 0.3) return "power_cocoa";
+		if (specialRoll < 0.55) return "power_blizzard";
+		if (specialRoll < 0.8) return "power_star";
+		return "hazard_spike"; // 20% of specials is a hazard
+	}
 
-	const finalWrongItems =
-		availableWrongItems.length > 0 ? availableWrongItems : wrongItems;
-	return finalWrongItems[Math.floor(Math.random() * finalWrongItems.length)];
-};
+	// 4. Other parts (wrong items from this or other characters)
+	const candidateWrongItems = requiredParts.filter((p) => p !== nextNeededItem);
+	if (candidateWrongItems.length > 0) {
+		const unflooded = candidateWrongItems.filter((p) => (itemCounts[p] || 0) < 2);
+		const pool = unflooded.length > 0 ? unflooded : candidateWrongItems;
+		return pool[Math.floor(Math.random() * pool.length)] as ItemType;
+	}
 
-// Legacy function for backward compatibility
-export const getSmartSpawnItemLegacy = (
-	nextNeededItem: ItemType | null
-): ItemType => {
-	return getSmartSpawnItem({
-		nextNeededItem,
-		currentItems: [],
-		timerSeconds: 30,
-		combo: 0,
-		difficulty: "medium",
-		lives: 5,
-	});
+	return (nextNeededItem as ItemType) || (requiredParts[0] as ItemType);
 };
