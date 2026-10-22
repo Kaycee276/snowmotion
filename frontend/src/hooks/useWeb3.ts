@@ -1,11 +1,10 @@
 import { useStellarWallet } from "./useStellarWallet";
-import type { Address } from "viem";
 
 export const useWeb3 = () => {
 	const stellar = useStellarWallet();
 
 	return {
-		address: stellar.address as Address | null,
+		address: stellar.address,
 		isConnected: stellar.isConnected,
 		isConnecting: false,
 		chainId: 148,
