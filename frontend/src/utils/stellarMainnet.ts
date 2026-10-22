@@ -4,7 +4,7 @@ export const stellarMainnet = defineChain({
 	id: 148,
 	name: "Stellar Mainnet",
 	nativeCurrency: {
-		decimals: 7,
+		decimals: 18,
 		name: "Lumen",
 		symbol: "XLM",
 	},
