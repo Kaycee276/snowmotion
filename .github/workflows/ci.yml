@@ -73,7 +73,7 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-unknown-unknown
+          targets: wasm32v1-none
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -84,4 +84,4 @@ jobs:
         run: cargo test --manifest-path contracts/Cargo.toml
 
       - name: Check Contract WASM Compilation
-        run: cargo check --target wasm32-unknown-unknown --release --manifest-path contracts/contracts/snowmotion_leaderboard/Cargo.toml
+        run: cargo check --target wasm32v1-none --release --manifest-path contracts/contracts/snowmotion_leaderboard/Cargo.toml

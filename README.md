@@ -1,85 +1,109 @@
-# ❄️ SnowMotion - Web3 Neo-Brutalist Arcade
+# ❄️ SnowMotion
 
-A high-performance, tamper-proof Web3 arcade game built on **Stellar Mainnet** with server-side score verification, Turso / SQLite persistence via Prisma ORM, multi-character selection, 3D neo-brutalist visual items, and a built-in retro Web Audio synthesizer.
+[![CI Pipeline](https://github.com/Kaycee276/snowmotion/actions/workflows/ci.yml/badge.svg)](https://github.com/Kaycee276/snowmotion/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Stellar](https://img.shields.io/badge/Blockchain-Stellar%20Soroban-black?logo=stellar)](https://stellar.org)
+[![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript-blue?logo=react)](https://react.dev)
+
+A fast-paced, tamper-proof Web3 arcade game built on the **Stellar blockchain** using **Soroban smart contracts**, gasless backend score attestation, Turso SQLite database persistence via Prisma ORM, multi-character selection, neo-brutalist visuals, and a hardware-accelerated Web Audio synthesizer.
 
 ---
 
 ## 🎮 Key Features
 
-- **Multi-Character Selection:** Choose between **Frosty Snowman**, **Cyber Bot-3000**, **Yeti the Savage**, and **Ginger Defender**, each with unique part-collection sequences and bonus accessories.
-- **Neo-Brutalist Aesthetic:** Vibrant high-contrast pop colors, bold black borders, hard offset shadows, and stylized 3D vector SVG item assets.
-- **60 FPS Physics Engine:** Powered by `requestAnimationFrame` with delta-time smoothing and zero-jitter GPU positioning.
-- **Interactive Power-ups & Hazards:**
-  - ☕ **Hot Cocoa:** Adds $+8\text{s}$ time boost or restores life.
-  - 🧊 **Blizzard Freeze:** Freezes the field and slows down falling items by 55% for 6 seconds.
-  - ⭐ **Golden Star:** Grants $+3$ points and boosts combo streak.
-  - 💥 **Spike Hazard:** Dangerous mine to dodge (clicking costs $-1$ life).
-- **Zero-Dependency Sound Synthesizer:** Built-in Web Audio API sound effects for chime catches, fanfare combos, retro error buzzers, and a persistent mute toggle.
-- **Serverless Database & Anti-Cheat:**
-  - **Neon PostgreSQL & Prisma ORM:** High-performance serverless database for tracking game sessions, score validation, and fallback leaderboards.
-  - **Cryptographic Attestation:** Server-side game session hashing, duration pacing validation, and rate-limited API endpoints.
-  - **Stellar Mainnet Ledger:** Cryptographically attested scores verified and recorded on-chain.
+- **Multi-Character Selection:** Choose between **Frosty Snowman**, **Cyber Bot-3000**, **Yeti the Savage**, and **Ginger Defender**, each with unique part-collection sequences and visual accessories.
+- **Neo-Brutalist Aesthetic:** High-contrast color blocks, sharp borders, hard offset shadows, responsive mobile/desktop layouts, and zero visual clutter.
+- **Gasless Web3 Experience:** Players connect their Stellar wallet (Freighter, Albedo, xBull, LOBSTR) and play seamlessly without paying gas or signing transaction popups after every session.
+- **Tamper-Proof On-Chain Leaderboard:** Soroban smart contract records top verified scores directly on the Stellar ledger with replay protection and server attestation.
+- **Server-Side Anti-Cheat & Rate Limiting:** Duration verification, physics-bounded score pacing validation, unique cryptographic session salt hashes, and IP-based rate limiting.
+- **Turso / SQLite via Prisma ORM:** Resilient serverless database caching sessions, user scores, and instant leaderboard fallbacks.
+- **Built-in Retro Audio Synthesizer:** Zero-dependency sound effects powered by native Web Audio API (chimes, fanfare combos, retro buzzers, and persistent mute controls).
+- **Session Persistence & Reload Guard:** Automatically auto-saves gameplay in local storage and guards against accidental browser reload.
 
 ---
 
-## 🏗️ Project Structure
+## 🏗️ Project Architecture
 
 ```
 snowmotion/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml          # GitHub Actions CI for PRs and pushes
+│       └── ci.yml          # Automated CI (Frontend, Backend, Rust Soroban contracts)
 ├── frontend/               # React 19 + TypeScript + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── components/     # Neo-brutalist UI components & 3D assets
-│   │   ├── store/          # Zustand game store
-│   │   ├── types/          # Character & game interfaces
-│   │   └── utils/          # Smart spawning & Stellar network config
+│   │   ├── components/     # Game canvas, Leaderboard, Wallet Modal, UI
+│   │   ├── hooks/          # useStellarWallet, useWeb3
+│   │   ├── store/          # Zustand game store & state persistence
+│   │   └── utils/          # Native Stellar wallet connectors & sound synth
 │   └── package.json
 ├── backend/                # Node.js + Express API server
-│   ├── prisma/             # Prisma ORM schema for Neon PostgreSQL
-│   ├── services/           # Prisma client & Contract ABI services
-│   ├── server.js           # Server with anti-cheat & rate limiting
+│   ├── prisma/             # Prisma schema for Turso / SQLite (libSQL)
+│   ├── services/           # Soroban RPC submission & Prisma client
+│   ├── server.js           # Anti-cheat verification, session hashing, API routes
 │   └── package.json
+├── contracts/              # Soroban smart contracts in Rust
+│   └── contracts/snowmotion_leaderboard/
+│       ├── src/lib.rs      # Leaderboard contract with replay guards & relayer auth
+│       ├── src/test.rs     # Rust unit tests
+│       └── Cargo.toml
+├── vercel.json             # Vercel deployment configuration
+├── CONTRIBUTING.md         # Open-source contributor guide
+├── LICENSE                 # MIT License
 └── README.md
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Backend Setup
+### 1. Prerequisites
+- **Node.js**: v20 or higher
+- **Rust**: 1.84+ with target `wasm32v1-none` (`rustup target add wasm32v1-none`)
+- **Stellar CLI**: (optional, for contract deployment)
+
+### 2. Backend Setup
 ```bash
 cd backend
 npm install
-# Configure your .env file
-echo "DATABASE_URL=postgresql://user:password@ep-cool-snowflake-123456.us-east-2.aws.neon.tech/neondb?sslmode=require" >> .env
-echo "GAME_SIGNING_KEY=your_private_key_here" >> .env
-echo "CONTRACT_ADDRESS=your_contract_address" >> .env
-echo "RPC_URL=https://mainnet.sorobanrpc.com" >> .env
+cp .env.example .env
+# Fill in your TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, and STELLAR_SECRET_KEY
 npm run dev
 ```
 
-### 2. Frontend Setup
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
+cp .env.example .env
+# Set VITE_API_URL to your backend (defaults to http://localhost:3001)
 npm run dev
 ```
 
-### 3. CI Checks
-GitHub Actions runs automatically on pushes and pull requests targeting the default branch:
-- Type checking (`tsc -b`)
-- Production build (`vite build`)
-- Linting (`eslint .`)
-- Prisma client generation (`npx prisma generate`)
-- Backend syntax verification (`node --check server.js`)
+### 4. Smart Contract Compilation & Tests
+```bash
+cargo test --manifest-path contracts/Cargo.toml
+cargo check --target wasm32v1-none --release --manifest-path contracts/contracts/snowmotion_leaderboard/Cargo.toml
+```
 
 ---
 
-## 🛠️ Tech Stack
+## 🛡️ Smart Contract Details (Stellar Testnet)
 
-- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, Reown AppKit / viem.
-- **Backend:** Node.js, Express, Prisma ORM, Turso / SQLite (libSQL).
-- **Blockchain:** Stellar Mainnet (`XLM`).
-- **Audio:** Web Audio API (native hardware-accelerated synthesis).
+- **Contract ID:** [`CCDANXNV2JNHTVJLTUMAPM77KQHNIYON7TKDXH3J7YYWLTH6NPRHSBK7`](https://stellar.expert/explorer/testnet/contract/CCDANXNV2JNHTVJLTUMAPM77KQHNIYON7TKDXH3J7YYWLTH6NPRHSBK7)
+- **Functions:**
+  - `submit_score(player, score, difficulty, game_hash)` - Records verified score (relayer-attested).
+  - `get_leaderboard()` - Returns top global scores sorted descending.
+  - `get_player_best(player)` - Returns high score for a specific wallet address.
+  - `is_game_recorded(game_hash)` - Checks replay protection status.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and contribution guidelines.
+
+---
+
+## 📄 License
+
+This project is open-source under the [MIT License](LICENSE).
