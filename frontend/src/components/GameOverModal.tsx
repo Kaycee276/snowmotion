@@ -1,9 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
 import { useGameStore } from "../store/gameStore";
-import { DIFFICULTY_CONFIGS } from "../types/difficulty";
+import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
 import type { Address } from "viem";
-import type { DifficultyLevel } from "../types/difficulty";
 
 interface GameOverModalProps {
 	score: number;
@@ -20,13 +19,13 @@ interface LeaderboardEntry {
 	difficulty: DifficultyLevel;
 }
 
-const GameOverModal = ({
+const GameOverModal: React.FC<GameOverModalProps> = ({
 	score,
 	difficulty,
 	onRestart,
 	onShowLeaderboard,
 	onShowInstructions,
-}: GameOverModalProps) => {
+}) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [txHash, setTxHash] = useState<string | null>(null);
@@ -52,8 +51,8 @@ const GameOverModal = ({
 			});
 
 			localStorage.setItem("snowmotion-scores", JSON.stringify(scores));
-		} catch (error) {
-			console.error("Error saving score locally:", error);
+		} catch (err) {
+			console.error("Error saving score locally:", err);
 		}
 	};
 
@@ -74,22 +73,19 @@ const GameOverModal = ({
 		try {
 			const gameHash = useGameStore.getState().gameHash;
 			if (!gameHash) {
-				throw new Error('No game session found');
+				throw new Error("No game session found");
 			}
-			
-			const difficultyMap = { easy: 0, medium: 1, hard: 2 };
+
+			const difficultyMap: Record<DifficultyLevel, number> = { easy: 0, medium: 1, hard: 2 };
 			const hash = await submitScore(score, difficultyMap[difficulty], gameHash);
 			setTxHash(hash);
 
-			// Save to localStorage as backup/for demo
 			saveScoreLocally(address, score, difficulty);
-
 			setIsSubmitted(true);
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to submit score";
 			setError(errorMessage);
-			// Still save locally even if blockchain submission fails
 			if (address) {
 				saveScoreLocally(address, score, difficulty);
 			}
@@ -99,120 +95,101 @@ const GameOverModal = ({
 	};
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-100 overflow-hidden">
-			<div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm sm:max-w-md mx-2 text-center shadow-2xl max-h-[95vh] overflow-hidden relative">
+		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-xs z-50 p-3 overflow-y-auto">
+			<div className="bg-[#FFFDF0] border-4 border-black rounded-3xl p-5 sm:p-7 max-w-md w-full text-center shadow-[8px_8px_0px_#000] relative">
 				<button
 					onClick={onShowInstructions}
-					className="absolute top-2 right-2 bg-blue-100 hover:bg-blue-200 text-blue-600 p-2 rounded-xl transition-colors"
+					className="absolute top-3 right-3 bg-[#00F0FF] hover:bg-[#7df5ff] text-black border-2 border-black p-1.5 rounded-xl shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs"
 					title="View Instructions"
 				>
 					❓
 				</button>
-				<h2 className="text-2xl sm:text-4xl font-bold mb-3 text-blue-600">
-					Game Over! 🎉
-				</h2>
 
-				<div className="text-4xl sm:text-6xl font-bold text-gray-800 mb-4">
-					{score}
+				{/* Header */}
+				<div className="inline-block bg-[#FF007A] text-white border-3 border-black shadow-[4px_4px_0px_#000] px-4 py-1 rounded-xl -rotate-2 mb-3">
+					<h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider">
+						GAME OVER! 💥
+					</h2>
 				</div>
-				<p className="text-gray-700 mb-4">Final Score</p>
 
-				{!isConnected && (
-					<p className="text-red-500">
-						Connect wallet to submit score to leader board
+				{/* Score Box */}
+				<div className="bg-[#FFE600] border-4 border-black rounded-2xl p-4 shadow-[4px_4px_0px_#000] mb-4">
+					<div className="text-5xl sm:text-6xl font-black text-black">
+						{score}
+					</div>
+					<div className="text-xs font-black uppercase tracking-widest text-black mt-1">
+						Final Score • {DIFFICULTY_CONFIGS[difficulty].label} Mode
+					</div>
+				</div>
+
+				{/* Wallet Status */}
+				{!isConnected ? (
+					<p className="text-xs font-bold text-red-600 mb-3 bg-red-50 border border-black p-2 rounded-lg">
+						Connect your wallet to record this score on Somnia Mainnet!
 					</p>
-				)}
-
-				{isConnected && (
-					<div className="mb-3 text-sm text-gray-600">
-						Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+				) : (
+					<div className="mb-3 text-xs font-bold text-black flex items-center justify-center gap-2">
+						<span>Account: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
 						<button
 							onClick={connect}
-							className="ml-2 text-blue-600 hover:text-blue-800 underline"
+							className="underline text-blue-700 font-black cursor-pointer"
 						>
-							Change Wallet
+							Change
 						</button>
 					</div>
 				)}
 
+				{/* Submission result */}
 				{!isSubmitted ? (
-					<>
+					<div className="mb-4">
 						{error && (
-							<div className="bg-red-100 text-red-700 px-3 py-2 rounded-lg mb-3 text-xs sm:text-sm">
+							<div className="mb-3 p-2 bg-red-100 border-2 border-black text-red-800 text-xs font-bold rounded-lg">
 								{error}
 							</div>
 						)}
 						<button
 							onClick={handleSubmitScore}
 							disabled={isSubmitting}
-							className="w-full bg-blue-600 text-white px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+							className="w-full bg-[#00F0FF] hover:bg-[#6ef5ff] disabled:opacity-50 text-black border-3 border-black py-2.5 rounded-xl font-black text-sm uppercase shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer transition-all"
 						>
 							{isSubmitting
-								? "Submitting..."
-								: !isConnected
-								? "Connect Wallet"
-								: "Submit Score"}
+								? "VERIFYING & RECORDING..."
+								: isConnected
+								? "SUBMIT SCORE ON-CHAIN ⚡"
+								: "CONNECT WALLET TO SUBMIT"}
 						</button>
-					</>
+					</div>
 				) : (
-					<>
-						<div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg mb-3">
-							<div className="font-semibold text-sm">✓ Score submitted!</div>
-							{txHash && (
-								<div className="text-xs mt-1">
-									<a 
-										href={`https://explorer.somnia.network/tx/${txHash}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="text-blue-600 hover:text-blue-800 underline"
-									>
-										Tx: {txHash.slice(0, 8)}...{txHash.slice(-6)}
-									</a>
-								</div>
-							)}
+					<div className="mb-4 p-3 bg-[#00FF66] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000]">
+						<div className="text-sm font-black text-black uppercase mb-1">
+							✓ VERIFIED & RECORDED ON-CHAIN!
 						</div>
-					</>
-				)}
-
-				{isSubmitted && (
-					<div className="mb-4">
-						<p className="text-sm text-gray-600 mb-2">Change Difficulty:</p>
-						<div className="flex gap-1 justify-center">
-							{Object.entries(DIFFICULTY_CONFIGS).map(([key, config]) => (
-								<button
-									key={key}
-									onClick={() =>
-										useGameStore
-											.getState()
-											.setDifficulty(key as DifficultyLevel)
-									}
-									className={`px-2 py-1 text-xs rounded ${
-										difficulty === key
-											? "bg-blue-600 text-white"
-											: "bg-gray-200 text-gray-700"
-									}`}
-								>
-									{config.label}
-								</button>
-							))}
-						</div>
+						{txHash && (
+							<a
+								href={`https://explorer.somnia.network/tx/${txHash}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-[11px] font-bold text-black underline break-all block"
+							>
+								View Somnia Explorer ↗
+							</a>
+						)}
 					</div>
 				)}
 
-				<div className="flex gap-2 ">
+				{/* Actions */}
+				<div className="flex gap-2">
 					<button
 						onClick={onRestart}
-						disabled={isSubmitting}
-						className=" bg-gray-300 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors disabled:opacity-50 "
+						className="flex-1 bg-[#00FF66] hover:bg-[#52ff99] text-black border-3 border-black py-2.5 rounded-xl font-black text-sm uppercase shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer transition-all"
 					>
-						Play Again
+						PLAY AGAIN 🔄
 					</button>
-
 					<button
 						onClick={onShowLeaderboard}
-						className="bg-gray-300 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-lg font-semibold hover:bg-gray-400 transition-colors"
+						className="flex-1 bg-white hover:bg-gray-100 text-black border-3 border-black py-2.5 rounded-xl font-black text-sm uppercase shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer transition-all"
 					>
-						View Leaderboard 🏆
+						LEADERBOARD 🏆
 					</button>
 				</div>
 			</div>

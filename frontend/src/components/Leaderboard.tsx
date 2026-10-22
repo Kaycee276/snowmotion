@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { gameApi } from "../services/gameApi";
+import { useGameStore } from "../store/gameStore";
 import type { Address } from "viem";
 import type { DifficultyLevel } from "../types/difficulty";
-import { useAppKitAccount } from "@reown/appkit/react";
-import { gameApi } from "../services/gameApi";
 
 interface LeaderboardEntry {
 	address: Address;
@@ -34,21 +34,42 @@ const getNormalizedScore = (entry: LeaderboardEntry): number => {
 	return Math.round(entry.score * getDifficultyMultiplier(entry.difficulty));
 };
 
-const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
-	const { address: connectedAddress } = useAppKitAccount();
+const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 	const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-	const [filteredEntries, setFilteredEntries] = useState<LeaderboardEntry[]>(
-		[]
-	);
-	const [selectedDifficulty, setSelectedDifficulty] = useState<
-		DifficultyLevel | "all"
-	>("all");
+	const [filteredEntries, setFilteredEntries] = useState<LeaderboardEntry[]>([]);
+	const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | "all">("all");
 	const [isLoading, setIsLoading] = useState(false);
+	const { connectedAddress } = useGameStore();
+
+	const loadLeaderboard = async () => {
+		setIsLoading(true);
+		try {
+			const data = await gameApi.getLeaderboard();
+			const formattedEntries: LeaderboardEntry[] = data.map((entry) => ({
+				...entry,
+				address: entry.address as Address,
+				difficulty: (["easy", "medium", "hard"][entry.difficulty] || "medium") as DifficultyLevel,
+			}));
+			setEntries(formattedEntries);
+		} catch (error) {
+			console.error("Error loading leaderboard:", error);
+			// Fallback to localStorage
+			try {
+				const savedScores = localStorage.getItem("snowmotion-scores");
+				if (savedScores) {
+					setEntries(JSON.parse(savedScores));
+				}
+			} catch (localError) {
+				console.error("Error loading local scores:", localError);
+			}
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	useEffect(() => {
 		if (isOpen) {
 			loadLeaderboard();
-			// Auto-refresh every 10 seconds
 			const interval = setInterval(loadLeaderboard, 10000);
 			return () => clearInterval(interval);
 		}
@@ -56,13 +77,11 @@ const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
 
 	useEffect(() => {
 		if (selectedDifficulty === "all") {
-			// Sort by normalized score for fair comparison across difficulties
-			const normalizedEntries = [...entries].sort(
+			const normalized = [...entries].sort(
 				(a, b) => getNormalizedScore(b) - getNormalizedScore(a)
 			);
-			setFilteredEntries(normalizedEntries);
+			setFilteredEntries(normalized);
 		} else {
-			// Sort by raw score within same difficulty
 			const filtered = entries
 				.filter((entry) => entry.difficulty === selectedDifficulty)
 				.sort((a, b) => b.score - a.score);
@@ -70,182 +89,126 @@ const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
 		}
 	}, [entries, selectedDifficulty]);
 
-	const loadLeaderboard = async () => {
-		setIsLoading(true);
-		try {
-			const data = await gameApi.getLeaderboard();
-			const formattedEntries: LeaderboardEntry[] = data.map(entry => ({
-				...entry,
-				address: entry.address as Address,
-				difficulty: ['easy', 'medium', 'hard'][entry.difficulty] as DifficultyLevel
-			}));
-			setEntries(formattedEntries);
-		} catch (error) {
-			console.error("Error loading leaderboard:", error);
-			// Fallback to localStorage
-			const savedScores = localStorage.getItem("snowmotion-scores");
-			if (savedScores) {
-				const scores: LeaderboardEntry[] = JSON.parse(savedScores);
-				setEntries(scores);
-			} else {
-				setEntries([]);
-			}
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const formatAddress = (addr: Address) => {
-		return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-	};
-
 	if (!isOpen) return null;
 
+	const formatAddress = (address: string) => {
+		return `${address.slice(0, 6)}...${address.slice(-4)}`;
+	};
+
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-110">
-			<div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-				<div className="flex justify-between items-start mb-6">
+		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-xs z-50 p-2 sm:p-4 overflow-y-auto">
+			<div className="bg-[#FFFDF0] border-4 border-black rounded-3xl p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[8px_8px_0px_#000] relative">
+				{/* Header */}
+				<div className="flex items-start justify-between pb-3 border-b-3 border-black mb-3">
 					<div>
-						<h2 className="text-3xl font-bold text-blue-600">🏆 Leaderboard</h2>
-						<div className="flex gap-2 mt-4">
-							{(["all", "easy", "medium", "hard"] as const).map(
-								(difficulty) => (
-									<button
-										key={difficulty}
-										onClick={() => setSelectedDifficulty(difficulty)}
-										className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-											selectedDifficulty === difficulty
-												? "bg-blue-600 text-white"
-												: "bg-gray-200 text-gray-700 hover:bg-gray-300"
-										}`}
-									>
-										{difficulty === "all"
-											? "All"
-											: difficulty.charAt(0).toUpperCase() +
-											  difficulty.slice(1)}
-									</button>
-								)
-							)}
+						<div className="inline-block bg-[#FFE600] border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_#000] mb-1">
+							<h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
+								🏆 SOMNIA LEADERBOARD
+							</h2>
 						</div>
-						{selectedDifficulty === "all" && (
-							<div className="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
-								💡 <strong>Fair Ranking:</strong> Scores are normalized (Easy:
-								1x, Medium: 1.5x, Hard: 2x) for equal competition across
-								difficulties
-							</div>
-						)}
+						<p className="text-xs font-bold text-gray-700">
+							Verified scores submitted to the Somnia smart contract
+						</p>
 					</div>
 					<button
 						onClick={onClose}
-						className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+						className="bg-black text-white hover:bg-red-600 border-2 border-black w-8 h-8 rounded-xl font-black text-lg flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#000]"
 					>
-						×
+						✕
 					</button>
 				</div>
 
-				{isLoading ? (
-					<div className="text-center py-12 text-gray-500">
-						Loading leaderboard...
-					</div>
-				) : filteredEntries.length === 0 ? (
-					<div className="text-center py-12 text-gray-500">
-						No scores yet. Be the first to submit!
-					</div>
-				) : (
-					<div className="overflow-y-auto flex-1">
-						<div className="space-y-2">
-							{filteredEntries.slice(0, 10).map((entry, index) => {
-								const isMe =
-									connectedAddress &&
-									entry.address.toLowerCase() ===
-										connectedAddress.toLowerCase();
-								return (
-									<div
-										key={`${entry.address}-${entry.timestamp}`}
-										className={`flex items-center justify-between p-4 rounded-lg ${
-											index === 0
-												? "bg-yellow-100 border-2 border-yellow-400"
-												: index === 1
-												? "bg-gray-100 border-2 border-gray-300"
-												: index === 2
-												? "bg-orange-100 border-2 border-orange-300"
-												: "bg-gray-50 border border-gray-200"
-										}`}
-									>
-										<div className="flex items-center gap-4">
-											<div
-												className={`text-2xl font-bold ${
-													index === 0
-														? "text-yellow-600"
-														: index === 1
-														? "text-gray-600"
-														: index === 2
-														? "text-orange-600"
-														: "text-gray-400"
-												}`}
-											>
-												{index === 0
-													? "🥇"
-													: index === 1
-													? "🥈"
-													: index === 2
-													? "🥉"
-													: `#${index + 1}`}
-											</div>
-											<div>
-												<div className="font-mono text-sm text-gray-700 flex items-center gap-2">
-													{formatAddress(entry.address)}
-													{isMe && (
-														<span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-															ME
-														</span>
-													)}
-												</div>
-												<div className="flex items-center gap-2 text-xs text-gray-500">
-													<span>
-														{new Date(entry.timestamp).toLocaleDateString()}
-													</span>
-													<span
-														className={`px-2 py-0.5 rounded text-xs font-medium ${
-															entry.difficulty === "easy"
-																? "bg-green-100 text-green-700"
-																: entry.difficulty === "medium"
-																? "bg-yellow-100 text-yellow-700"
-																: "bg-red-100 text-red-700"
-														}`}
-													>
-														{entry.difficulty?.toUpperCase()}
-													</span>
-												</div>
-											</div>
-										</div>
-										<div className="text-right">
-											<div className="text-2xl font-bold text-blue-600">
-												{selectedDifficulty === "all"
-													? getNormalizedScore(entry)
-													: entry.score}
-											</div>
-											{selectedDifficulty === "all" && (
-												<div className="text-xs text-gray-500">
-													Raw: {entry.score}
-												</div>
-											)}
-										</div>
-									</div>
-								);
-							})}
-						</div>
+				{/* Filter Tabs */}
+				<div className="flex flex-wrap gap-2 mb-3">
+					{(["all", "easy", "medium", "hard"] as const).map((diff) => {
+						const isSelected = selectedDifficulty === diff;
+						return (
+							<button
+								key={diff}
+								onClick={() => setSelectedDifficulty(diff)}
+								className={`px-3 py-1 rounded-xl font-black text-xs uppercase border-2 border-black cursor-pointer transition-all ${
+									isSelected
+										? "bg-[#00F0FF] shadow-[3px_3px_0px_#000] -translate-y-0.5 text-black"
+										: "bg-white hover:bg-gray-100 shadow-[1px_1px_0px_#000] text-gray-800"
+								}`}
+							>
+								{diff === "all" ? "⭐ All Difficulties" : diff}
+							</button>
+						);
+					})}
+				</div>
+
+				{/* Notice */}
+				{selectedDifficulty === "all" && (
+					<div className="mb-3 px-3 py-1.5 bg-[#00FF66]/30 border-2 border-black rounded-xl text-[11px] font-bold text-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
+						<span>💡</span>
+						<span>Scores are normalized (Easy: 1x, Medium: 1.5x, Hard: 2x) for competitive fairness!</span>
 					</div>
 				)}
 
-				<div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
-					<p className="text-sm text-gray-500 text-center">
-						Scores are stored on-chain. Connect your wallet to see your ranking!
-					</p>
-					<div className="text-xs text-gray-400 text-center">
-						<strong>Scoring:</strong> Easy (1x) • Medium (1.5x) • Hard (2x
-						multiplier)
-					</div>
+				{/* Table / List */}
+				<div className="flex-1 overflow-y-auto space-y-2 pr-1">
+					{isLoading ? (
+						<div className="text-center py-12 font-black text-sm text-gray-600">
+							LOADING BLOCKCHAIN SCORES...
+						</div>
+					) : filteredEntries.length === 0 ? (
+						<div className="text-center py-12 font-black text-sm text-gray-600">
+							NO SCORES YET. BE THE FIRST TO BUILD!
+						</div>
+					) : (
+						filteredEntries.map((entry, idx) => {
+							const isMe =
+								connectedAddress &&
+								entry.address.toLowerCase() === connectedAddress.toLowerCase();
+
+							const medalBg =
+								idx === 0
+									? "bg-[#FFE600]"
+									: idx === 1
+									? "bg-[#E0E0E0]"
+									: idx === 2
+									? "bg-[#FFAB91]"
+									: "bg-white";
+
+							return (
+								<div
+									key={`${entry.address}-${entry.timestamp}-${idx}`}
+									className={`flex items-center justify-between p-3 rounded-2xl border-3 border-black shadow-[3px_3px_0px_#000] transition-all ${medalBg} ${
+										isMe ? "ring-2 ring-[#FF007A]" : ""
+									}`}
+								>
+									<div className="flex items-center gap-3">
+										<div className="w-8 h-8 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center">
+											#{idx + 1}
+										</div>
+										<div>
+											<div className="font-black text-xs sm:text-sm text-black flex items-center gap-1.5">
+												<span>{formatAddress(entry.address)}</span>
+												{isMe && (
+													<span className="bg-[#FF007A] text-white text-[9px] font-black px-1.5 rounded border border-black">
+														YOU
+													</span>
+												)}
+											</div>
+											<div className="text-[10px] font-bold uppercase text-gray-600">
+												{entry.difficulty} mode • {new Date(entry.timestamp).toLocaleDateString()}
+											</div>
+										</div>
+									</div>
+
+									<div className="text-right">
+										<div className="font-black text-lg sm:text-xl text-black">
+											{selectedDifficulty === "all" ? getNormalizedScore(entry) : entry.score}
+										</div>
+										<div className="text-[9px] font-bold text-gray-600 uppercase">
+											{selectedDifficulty === "all" ? "Normalized" : "Points"}
+										</div>
+									</div>
+								</div>
+							);
+						})
+					)}
 				</div>
 			</div>
 		</div>

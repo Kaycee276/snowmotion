@@ -1,7 +1,9 @@
+import React, { useEffect } from "react";
 import { useGameStore } from "../store/gameStore";
 import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { useEffect } from "react";
+import CharacterSelector from "./CharacterSelector";
+import { sound } from "../utils/soundEffects";
 
 interface DifficultySelectorProps {
 	onStart: () => void;
@@ -9,64 +11,113 @@ interface DifficultySelectorProps {
 	onShowInstructions: () => void;
 }
 
-const DifficultySelector = ({
+const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 	onStart,
 	onShowLeaderboard,
 	onShowInstructions,
-}: DifficultySelectorProps) => {
-	const { difficulty, setDifficulty, setConnectedAddress } = useGameStore();
+}) => {
+	const {
+		difficulty,
+		setDifficulty,
+		setConnectedAddress,
+		selectedCharacter,
+		setSelectedCharacter,
+	} = useGameStore();
 	const { open } = useAppKit();
 	const { address, isConnected } = useAppKitAccount();
+	const [isMuted, setIsMuted] = React.useState(sound.getMuted());
 
-	// Update global connected address when wallet connection changes
 	useEffect(() => {
 		setConnectedAddress(address || null);
 	}, [address, setConnectedAddress]);
 
+	const handleSoundToggle = () => {
+		const muted = sound.toggleMute();
+		setIsMuted(muted);
+	};
+
 	const difficultyLevels: DifficultyLevel[] = ["easy", "medium", "hard"];
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-20 overflow-hidden">
-			<div className="bg-white rounded-2xl p-4 sm:p-6 gap-3 flex flex-col max-w-sm sm:max-w-2xl max-h-[95vh] mx-2 text-center shadow-2xl overflow-hidden relative">
-				<button
-					onClick={onShowInstructions}
-					className="absolute top-2 right-2 bg-blue-100 hover:bg-blue-200 text-blue-600 p-2 rounded-xl transition-colors"
-					title="View Instructions"
-				>
-					❓
-				</button>
-				<h1 className="text-2xl sm:text-4xl font-bold mb-2 text-blue-600">
-					❄️ SnowMotion
-				</h1>
-				<p className="text-gray-700 mb-3 sm:mb-6 text-xs sm:text-base">
-					Collect items in order to build snowmen!
-					<br />
-					❄️ → ⚫ → 🥕 → 🎩 (+ 🧣 for bonus) <br /> View Instructions at top
-					right corner
-				</p>
+		<div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-30 p-2 sm:p-4 overflow-y-auto">
+			<div className="bg-[#FFFDF0] border-4 border-black rounded-3xl p-4 sm:p-6 w-full max-w-xl shadow-[8px_8px_0px_#000] relative max-h-[95vh] overflow-y-auto">
+				{/* Top Controls */}
+				<div className="flex items-center justify-between pb-3 border-b-3 border-black mb-4">
+					<div className="flex items-center gap-2">
+						<span className="bg-[#FFE600] border-2 border-black font-black text-xs px-2 py-1 rounded shadow-[2px_2px_0px_#000]">
+							SOMNIA L1
+						</span>
+						<span className="font-black text-xs text-black uppercase tracking-wider">
+							Web3 Arcade
+						</span>
+					</div>
 
-				<div className="mb-4 sm:mb-6">
-					<h2 className="text-lg sm:text-2xl font-bold mb-3 text-gray-800">
-						Select Difficulty
-					</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+					<div className="flex items-center gap-2">
+						<button
+							onClick={handleSoundToggle}
+							className="bg-white hover:bg-yellow-200 text-black border-2 border-black p-2 rounded-xl shadow-[2px_2px_0px_#000] cursor-pointer font-bold text-xs"
+							title={isMuted ? "Unmute Sound" : "Mute Sound"}
+						>
+							{isMuted ? "🔇" : "🔊"}
+						</button>
+						<button
+							onClick={onShowInstructions}
+							className="bg-[#00F0FF] hover:bg-[#80F8FF] text-black border-2 border-black p-2 rounded-xl shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs"
+							title="How to Play"
+						>
+							HELP ❓
+						</button>
+					</div>
+				</div>
+
+				{/* Title Banner */}
+				<div className="text-center mb-4">
+					<div className="inline-block bg-[#00F0FF] border-3 border-black shadow-[4px_4px_0px_#000] px-4 py-1.5 rounded-2xl -rotate-1 mb-2">
+						<h1 className="text-2xl sm:text-4xl font-black tracking-tight text-black uppercase">
+							❄️ SNOWMOTION ⚡
+						</h1>
+					</div>
+					<p className="text-xs sm:text-sm font-bold text-gray-800">
+						Fast-paced 3D assembly game with tamper-proof on-chain scores!
+					</p>
+				</div>
+
+				{/* Character Selection */}
+				<CharacterSelector
+					selectedCharacter={selectedCharacter}
+					onSelect={setSelectedCharacter}
+				/>
+
+				{/* Difficulty Selection */}
+				<div className="mb-4">
+					<label className="block text-xs sm:text-sm font-black uppercase text-black mb-2 tracking-wider">
+						Select Speed & Challenge
+					</label>
+					<div className="grid grid-cols-3 gap-2 sm:gap-3">
 						{difficultyLevels.map((level) => {
 							const config = DIFFICULTY_CONFIGS[level];
 							const isSelected = difficulty === level;
+							const badgeColors: Record<DifficultyLevel, string> = {
+								easy: "bg-[#00FF66]",
+								medium: "bg-[#FFE600]",
+								hard: "bg-[#FF007A] text-white",
+							};
+
 							return (
 								<button
 									key={level}
+									type="button"
 									onClick={() => setDifficulty(level)}
-									className={`p-2 sm:p-3 rounded-lg border-2 transition-all ${
+									className={`p-2 sm:p-2.5 rounded-xl border-3 border-black text-left transition-all cursor-pointer ${
 										isSelected
-											? "border-blue-600 bg-blue-50 scale-105"
-											: "border-gray-300 border-dotted hover:border-blue-300 hover:bg-gray-50"
+											? `${badgeColors[level]} shadow-[4px_4px_0px_#000] -translate-y-0.5`
+											: "bg-white hover:bg-gray-50 shadow-[2px_2px_0px_#000]"
 									}`}
 								>
-									<div className="text-sm sm:text-lg font-bold text-gray-800 mb-1">
+									<div className="font-black text-xs sm:text-sm uppercase leading-tight">
 										{config.label}
 									</div>
-									<div className="text-xs text-gray-600 mb-1">
+									<div className="text-[10px] font-bold opacity-80 mt-0.5 truncate">
 										{config.description}
 									</div>
 								</button>
@@ -75,45 +126,52 @@ const DifficultySelector = ({
 					</div>
 				</div>
 
-				{/* Wallet Connection */}
+				{/* Wallet Status Banner */}
 				{!isConnected ? (
-					<div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-						<p className="text-sm text-yellow-800 mb-2">
-							Connect your wallet to play and submit scores
-						</p>
-						<button
-							onClick={() => open()}
-							className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-						>
-							Connect Wallet
-						</button>
+					<div className="mb-4 p-3 bg-[#FFE600] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000]">
+						<div className="flex items-center justify-between gap-2">
+							<span className="text-xs font-black text-black">
+								Connect Somnia wallet to submit scores!
+							</span>
+							<button
+								type="button"
+								onClick={() => open()}
+								className="bg-black text-white hover:bg-gray-800 px-3 py-1.5 rounded-lg font-black text-xs uppercase cursor-pointer border border-white"
+							>
+								Connect
+							</button>
+						</div>
 					</div>
 				) : (
-					<div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-						<p className="text-sm text-green-800">
+					<div className="mb-4 p-2.5 bg-[#00FF66] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000] flex items-center justify-between">
+						<span className="text-xs font-black text-black uppercase">
 							✓ Wallet Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
-						</p>
+						</span>
+						<button
+							type="button"
+							onClick={() => open({ view: "Account" })}
+							className="text-[10px] font-black underline cursor-pointer"
+						>
+							Change
+						</button>
 					</div>
 				)}
 
-				<div className="flex flex-col gap-2">
+				{/* Action Buttons */}
+				<div className="flex flex-col sm:flex-row gap-3">
 					<button
+						type="button"
 						onClick={onStart}
-						disabled={!isConnected}
-						className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold transition-colors ${
-							isConnected
-								? "bg-blue-600 text-white hover:bg-blue-700"
-								: "bg-gray-300 text-gray-500 cursor-not-allowed"
-						}`}
+						className="flex-1 bg-[#00FF66] hover:bg-[#20ff79] text-black border-4 border-black py-3 rounded-2xl font-black text-base uppercase tracking-wider shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer transition-all"
 					>
-						Start Game
+						PLAY NOW 🚀
 					</button>
-
 					<button
+						type="button"
 						onClick={onShowLeaderboard}
-						className="bg-gray-200 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-base sm:text-xl font-semibold hover:bg-gray-300 transition-colors flex-1"
+						className="bg-white hover:bg-[#FFFDF0] text-black border-4 border-black px-4 py-3 rounded-2xl font-black text-sm uppercase tracking-wider shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer transition-all"
 					>
-						View Leaderboard 🏆
+						LEADERBOARD 🏆
 					</button>
 				</div>
 			</div>
