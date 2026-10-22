@@ -44,6 +44,8 @@
 html {
 	min-height: 100%;
 	scroll-behavior: smooth;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 body {
@@ -57,6 +59,9 @@ body {
 	margin: 0;
 	padding: 0;
 	background-color: #FFFDF0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 #root {
