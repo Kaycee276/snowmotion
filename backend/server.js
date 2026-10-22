@@ -86,7 +86,7 @@ app.post("/api/start-game", rateLimitMiddleware(20, 60000), async (req, res) => 
 			ethers.toUtf8Bytes(`${player.toLowerCase()}-${Date.now()}-${salt}`)
 		);
 
-		// Store in database using Prisma (Neon PostgreSQL)
+		// Store in database using Prisma (Turso SQLite)
 		await prisma.gameSession.create({
 			data: {
 				gameHash,
@@ -130,7 +130,7 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 			return res.status(400).json({ error: "Difficulty must be 0 (easy), 1 (medium), or 2 (hard)" });
 		}
 
-		// 2. Check game session in database via Prisma (Neon PostgreSQL)
+		// 2. Check game session in database via Prisma (Turso SQLite)
 		const session = await prisma.gameSession.findUnique({
 			where: { gameHash },
 		});
@@ -200,7 +200,7 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 			signature
 		);
 
-		// Mark session as used in database using Prisma (Neon PostgreSQL)
+		// Mark session as used in database using Prisma (Turso SQLite)
 		await prisma.gameSession.update({
 			where: { id: session.id },
 			data: {
@@ -225,7 +225,7 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 	}
 });
 
-// Get leaderboard from contract (with Neon/Prisma fallback)
+// Get leaderboard from contract (with Turso/Prisma fallback)
 app.get("/api/leaderboard", async (req, res) => {
 	try {
 		if (contract) {
@@ -243,7 +243,7 @@ app.get("/api/leaderboard", async (req, res) => {
 			}
 		}
 
-		// Fallback to Neon PostgreSQL via Prisma
+		// Fallback to Turso SQLite via Prisma
 		const sessions = await prisma.gameSession.findMany({
 			where: { isUsed: true, score: { not: null } },
 			orderBy: { score: "desc" },
