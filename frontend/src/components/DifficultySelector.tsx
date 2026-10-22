@@ -22,6 +22,7 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 		setSelectedCharacter,
 		connectedAddress,
 		connectedWalletName,
+		guestAddress,
 		openWalletModal,
 		setConnectedAddress,
 		setConnectedWalletName,
@@ -31,7 +32,8 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 	} = useGameStore();
 
 	const [isMuted, setIsMuted] = useState(sound.getMuted());
-	const savedGame = getSavedGameSummary(connectedAddress || undefined);
+	const activeAddress = connectedAddress || guestAddress;
+	const savedGame = getSavedGameSummary(activeAddress || undefined);
 
 	const handleDisconnect = () => {
 		setConnectedAddress(null);
@@ -183,14 +185,24 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 
 				{/* Wallet Status Banner */}
 				{!connectedAddress ? (
-					<div className="mb-6 p-4 bg-white border-3 border-black shadow-[3px_3px_0px_#000] flex items-center justify-between gap-3">
-						<span className="text-xs font-black text-black uppercase">
-							Connect Stellar wallet to save scores
-						</span>
+					<div className="mb-6 p-3.5 bg-[#00F0FF]/15 border-3 border-black shadow-[3px_3px_0px_#000] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+						<div>
+							<div className="flex items-center gap-2">
+								<span className="bg-[#00F0FF] border-2 border-black font-black text-[10px] px-2 py-0.5 uppercase shadow-[1px_1px_0px_#000]">
+									INSTANT ARCADE MODE
+								</span>
+								<span className="text-xs font-black text-black uppercase">
+									{guestAddress ? `${guestAddress.slice(0, 6)}...${guestAddress.slice(-4)}` : "GUEST ON-CHAIN ID"}
+								</span>
+							</div>
+							<p className="text-[10px] font-bold text-gray-700 uppercase mt-1">
+								Play without wallet — scores are verified & recorded on Stellar automatically
+							</p>
+						</div>
 						<button
 							type="button"
 							onClick={openWalletModal}
-							className="bg-[#FFE600] hover:bg-[#fff04d] text-black px-4 py-2 font-black text-xs uppercase cursor-pointer border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+							className="bg-[#FFE600] hover:bg-[#fff04d] text-black px-3.5 py-1.5 font-black text-xs uppercase cursor-pointer border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 shrink-0"
 						>
 							CONNECT WALLET
 						</button>

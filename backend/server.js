@@ -6,6 +6,7 @@ const {
 	submitScoreOnChain,
 	getOnChainLeaderboard,
 	getRelayerAddress,
+	generateGuestAddress,
 } = require("./services/stellar");
 require("dotenv").config();
 
@@ -63,13 +64,16 @@ const isValidPlayerAddress = (addr) => {
 	return isStellar || isLegacyHex;
 };
 
-// Start game session
+// Start game session (supports both connected Stellar wallets and instant guest play)
 app.post("/api/start-game", rateLimitMiddleware(20, 60000), async (req, res) => {
 	try {
-		const { player } = req.body;
+		let { player } = req.body;
+		let isGuest = false;
 
-		if (!player || !isValidPlayerAddress(player)) {
-			return res.status(400).json({ error: "Valid Stellar player address required" });
+		// Support guest play without requiring wallet: generate or reuse valid guest Stellar address
+		if (!player || player === "guest" || !isValidPlayerAddress(player)) {
+			player = generateGuestAddress();
+			isGuest = true;
 		}
 
 		// Generate cryptographically secure game hash
@@ -89,7 +93,7 @@ app.post("/api/start-game", rateLimitMiddleware(20, 60000), async (req, res) => 
 			},
 		});
 
-		res.json({ gameHash });
+		res.json({ gameHash, player, isGuest });
 	} catch (error) {
 		console.error("Start game error:", error);
 		res.status(500).json({ error: "Failed to create game session" });

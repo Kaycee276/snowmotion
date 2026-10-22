@@ -1,5 +1,7 @@
 export interface GameSession {
 	gameHash: string;
+	player?: string;
+	isGuest?: boolean;
 }
 
 export interface SubmitScoreRequest {
@@ -25,13 +27,13 @@ export interface LeaderboardEntry {
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export const gameApi = {
-	async startGame(player: string): Promise<GameSession> {
+	async startGame(player?: string): Promise<GameSession> {
 		const response = await fetch(`${API_BASE_URL}/api/start-game`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({ player }),
+			body: JSON.stringify({ player: player || "guest" }),
 		});
 
 		if (!response.ok) {

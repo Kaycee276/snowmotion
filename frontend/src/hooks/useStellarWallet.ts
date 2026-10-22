@@ -54,15 +54,18 @@ export const useStellarWallet = () => {
 	}, [setConnectedAddress, setConnectedWalletName]);
 
 	const currentAddress = connectedAddress || address;
+	const guestAddress = useGameStore((s) => s.guestAddress);
+	const effectiveAddress = currentAddress || guestAddress;
 
 	const submitScore = useCallback(
-		async (score: number, difficulty: number, gameHash: string): Promise<string> => {
-			if (!currentAddress) {
-				throw new Error("Stellar wallet not connected");
+		async (score: number, difficulty: number, gameHash: string, playerOverride?: string): Promise<string> => {
+			const player = playerOverride || currentAddress || useGameStore.getState().guestAddress;
+			if (!player) {
+				throw new Error("No player identity available");
 			}
 
 			const result = await gameApi.submitScore({
-				player: currentAddress,
+				player,
 				score,
 				difficulty,
 				gameHash,
@@ -74,9 +77,12 @@ export const useStellarWallet = () => {
 	);
 
 	return {
-		address: currentAddress,
+		address: effectiveAddress,
+		connectedAddress: currentAddress,
+		guestAddress,
 		isConnected: Boolean(currentAddress),
-		walletName: connectedWalletName || walletName,
+		isGuest: !currentAddress && Boolean(guestAddress),
+		walletName: currentAddress ? (connectedWalletName || walletName) : "Guest Arcade",
 		isModalOpen: isWalletModalOpen,
 		openModal: openWalletModal,
 		closeModal: closeWalletModal,

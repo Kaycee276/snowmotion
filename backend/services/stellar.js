@@ -26,6 +26,10 @@ function getRelayerAddress() {
 	}
 }
 
+function generateGuestAddress() {
+	return Keypair.random().publicKey();
+}
+
 function isValidStellarAddress(addr) {
 	return typeof addr === "string" && /^G[A-Z2-7]{55}$/.test(addr);
 }
@@ -171,4 +175,5 @@ module.exports = {
 	getOnChainLeaderboard,
 	isValidStellarAddress,
 	getRelayerAddress,
+	generateGuestAddress,
 };

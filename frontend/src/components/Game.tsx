@@ -252,7 +252,7 @@ const Game: React.FC = () => {
 		try {
 			await startGame();
 		} catch {
-			setErrorMessage("Failed to start game. Please connect your wallet first.");
+			setErrorMessage("Failed to start game session.");
 			setTimeout(() => setErrorMessage(null), 4000);
 		}
 	};
@@ -263,7 +263,7 @@ const Game: React.FC = () => {
 		try {
 			await startGame();
 		} catch {
-			setErrorMessage("Failed to restart game. Please connect your wallet first.");
+			setErrorMessage("Failed to restart game session.");
 			setTimeout(() => setErrorMessage(null), 4000);
 		}
 	};

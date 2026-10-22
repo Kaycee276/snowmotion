@@ -56,13 +56,9 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 	};
 
 	const handleSubmitScore = async () => {
-		if (!isConnected) {
-			await connect();
-			return;
-		}
-
-		if (!address) {
-			setError("Wallet address not available");
+		const targetAddress = address || useGameStore.getState().guestAddress;
+		if (!targetAddress) {
+			setError("Player address not available");
 			return;
 		}
 
@@ -76,17 +72,17 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 			}
 
 			const difficultyMap: Record<DifficultyLevel, number> = { easy: 0, medium: 1, hard: 2 };
-			const hash = await submitScore(score, difficultyMap[difficulty], gameHash);
+			const hash = await submitScore(score, difficultyMap[difficulty], gameHash, targetAddress);
 			setTxHash(hash);
 
-			saveScoreLocally(address, score, difficulty);
+			saveScoreLocally(targetAddress, score, difficulty);
 			setIsSubmitted(true);
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to submit score";
 			setError(errorMessage);
-			if (address) {
-				saveScoreLocally(address, score, difficulty);
+			if (targetAddress) {
+				saveScoreLocally(targetAddress, score, difficulty);
 			}
 		} finally {
 			setIsSubmitting(false);
@@ -121,12 +117,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 					</div>
 				</div>
 
-				{/* Wallet Status */}
-				{!isConnected ? (
-					<p className="text-xs font-black uppercase text-black mb-5 bg-[#FFE600]/30 border-2 border-black p-3">
-						Connect your wallet to record this score on Stellar Mainnet!
-					</p>
-				) : (
+				{/* Wallet / Guest Status */}
+				{isConnected ? (
 					<div className="mb-5 text-xs font-black text-black flex items-center justify-center gap-3 bg-white p-2.5 border-2 border-black">
 						<span>ACCOUNT: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
 						<button
@@ -135,6 +127,19 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 							className="underline text-blue-700 font-black uppercase cursor-pointer"
 						>
 							Change
+						</button>
+					</div>
+				) : (
+					<div className="mb-5 p-2.5 bg-[#00F0FF]/15 border-2 border-black flex items-center justify-between text-xs">
+						<span className="font-black text-black uppercase">
+							GUEST: {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "ON-CHAIN ID"}
+						</span>
+						<button
+							type="button"
+							onClick={connect}
+							className="text-[11px] font-black underline uppercase text-black cursor-pointer"
+						>
+							Link Wallet
 						</button>
 					</div>
 				)}
@@ -155,9 +160,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 						>
 							{isSubmitting
 								? "VERIFYING & RECORDING..."
-								: isConnected
-								? "SUBMIT SCORE ON-CHAIN"
-								: "CONNECT WALLET TO SUBMIT"}
+								: "SUBMIT SCORE ON-CHAIN (GASLESS)"}
 						</button>
 					</div>
 				) : (

@@ -38,7 +38,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 	const [filteredEntries, setFilteredEntries] = useState<LeaderboardEntry[]>([]);
 	const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | "all">("all");
 	const [isLoading, setIsLoading] = useState(false);
-	const { connectedAddress } = useGameStore();
+	const { connectedAddress, guestAddress } = useGameStore();
 
 	const loadLeaderboard = async () => {
 		setIsLoading(true);
@@ -168,9 +168,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 						</div>
 					) : (
 						filteredEntries.map((entry, idx) => {
+							const myAddress = connectedAddress || guestAddress;
 							const isMe =
-								connectedAddress &&
-								entry.address.toLowerCase() === connectedAddress.toLowerCase();
+								Boolean(myAddress) &&
+								entry.address.toLowerCase() === myAddress?.toLowerCase();
 
 							const medalBg =
 								idx === 0

@@ -6,6 +6,7 @@ export const useWeb3 = () => {
 	return {
 		address: stellar.address,
 		isConnected: stellar.isConnected,
+		isGuest: stellar.isGuest,
 		isConnecting: false,
 		chainId: 148,
 		error: null,

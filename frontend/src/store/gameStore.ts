@@ -35,6 +35,7 @@ interface GameStore extends GameState {
 	playerNonce: number;
 	connectedAddress: string | null;
 	connectedWalletName: string | null;
+	guestAddress: string | null;
 	isWalletModalOpen: boolean;
 
 	// Actions
@@ -70,6 +71,7 @@ interface GameStore extends GameState {
 	resetTimer: () => void;
 	setLifeLossEffect: (effect: boolean) => void;
 	setConnectedAddress: (address: string | null) => void;
+	setGuestAddress: (address: string | null) => void;
 	tickBlizzard: () => void;
 
 	// Backwards compatibility helpers
@@ -111,10 +113,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		typeof window !== "undefined"
 			? localStorage.getItem("snowmotion_stellar_wallet")
 			: null,
+	guestAddress:
+		typeof window !== "undefined"
+			? localStorage.getItem("snowmotion_guest_address")
+			: null,
 	isWalletModalOpen: false,
 
 	openWalletModal: () => set({ isWalletModalOpen: true }),
 	closeWalletModal: () => set({ isWalletModalOpen: false }),
+	setGuestAddress: (address: string | null) => {
+		set({ guestAddress: address });
+		if (typeof window !== "undefined") {
+			if (address) localStorage.setItem("snowmotion_guest_address", address);
+			else localStorage.removeItem("snowmotion_guest_address");
+		}
+	},
 	setConnectedWalletName: (name: string | null) => {
 		set({ connectedWalletName: name });
 		if (typeof window !== "undefined") {
@@ -476,12 +489,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	startGame: async (walletAddress?: string) => {
 		try {
-			const address = walletAddress || get().connectedAddress;
-			if (!address) {
-				throw new Error("Wallet address required to start game");
-			}
+			const address =
+				walletAddress ||
+				get().connectedAddress ||
+				get().guestAddress ||
+				"guest";
 
 			const session = await gameApi.startGame(address);
+
+			if (session.player && !get().connectedAddress) {
+				set({ guestAddress: session.player });
+				if (typeof window !== "undefined") {
+					localStorage.setItem("snowmotion_guest_address", session.player);
+				}
+			}
 
 			set({
 				score: 0,
