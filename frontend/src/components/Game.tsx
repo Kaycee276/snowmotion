@@ -15,7 +15,11 @@ import { getSmartSpawnItem } from "../utils/smartSpawn";
 import { DIFFICULTY_CONFIGS } from "../types/difficulty";
 import { sound } from "../utils/soundEffects";
 
-const Game: React.FC = () => {
+interface GameProps {
+	onExitToHome?: () => void;
+}
+
+const Game: React.FC<GameProps> = ({ onExitToHome }) => {
 	const {
 		items,
 		score,
@@ -426,6 +430,7 @@ const Game: React.FC = () => {
 					onStart={handleStartGame}
 					onShowLeaderboard={() => setShowLeaderboard(true)}
 					onShowInstructions={() => setShowInstructions(true)}
+					onHome={onExitToHome}
 				/>
 			)}
 
@@ -495,10 +500,19 @@ const Game: React.FC = () => {
 								>
 									RESTART
 								</button>
+								{onExitToHome && (
+									<button
+										type="button"
+										onClick={onExitToHome}
+										className="bg-[#00F0FF] hover:bg-[#6ef5ff] text-black border-3 border-black px-4 py-2.5 font-black text-xs uppercase shadow-[3px_3px_0px_#000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+									>
+										HOME
+									</button>
+								)}
 								<button
 									type="button"
 									onClick={handleSoundToggle}
-									className="bg-[#FFE600] hover:bg-[#fff04d] text-black border-3 border-black px-5 py-2.5 font-black text-xs uppercase shadow-[3px_3px_0px_#000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+									className="bg-[#FFE600] hover:bg-[#fff04d] text-black border-3 border-black px-4 py-2.5 font-black text-xs uppercase shadow-[3px_3px_0px_#000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
 								>
 									{isMuted ? "UNMUTE" : "MUTE"}
 								</button>

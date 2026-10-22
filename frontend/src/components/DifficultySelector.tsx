@@ -8,12 +8,14 @@ interface DifficultySelectorProps {
 	onStart: () => void;
 	onShowLeaderboard: () => void;
 	onShowInstructions: () => void;
+	onHome?: () => void;
 }
 
 const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 	onStart,
 	onShowLeaderboard,
 	onShowInstructions,
+	onHome,
 }) => {
 	const {
 		difficulty,
@@ -59,25 +61,36 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-xs z-30 p-4 sm:p-6 overflow-y-auto">
 			<div className="bg-[#FFFDF0] border-4 border-black p-6 sm:p-8 w-full max-w-xl shadow-[8px_8px_0px_#000] relative max-h-[92vh] overflow-y-auto">
 				{/* Top Controls Bar */}
-				<div className="flex items-center justify-between pb-4 border-b-3 border-black mb-6">
-					<span className="bg-[#FFE600] border-2 border-black font-black text-xs px-3 py-1 uppercase shadow-[2px_2px_0px_#000]">
-						STELLAR MAINNET
-					</span>
+				<div className="flex items-center justify-between pb-4 border-b-3 border-black mb-6 gap-2">
+					<div className="flex items-center gap-2">
+						{onHome && (
+							<button
+								type="button"
+								onClick={onHome}
+								className="bg-white hover:bg-gray-100 text-black border-2 border-black px-2.5 py-1 shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs uppercase active:translate-x-0.5 active:translate-y-0.5"
+							>
+								← ABOUT
+							</button>
+						)}
+						<span className="bg-[#FFE600] border-2 border-black font-black text-xs px-2.5 py-1 uppercase shadow-[2px_2px_0px_#000]">
+							STELLAR MAINNET
+						</span>
+					</div>
 
-					<div className="flex items-center gap-3">
+					<div className="flex items-center gap-2 sm:gap-3">
 						<button
 							type="button"
 							onClick={handleSoundToggle}
-							className="bg-white hover:bg-yellow-200 text-black border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs uppercase active:translate-x-0.5 active:translate-y-0.5"
+							className="bg-white hover:bg-yellow-200 text-black border-2 border-black px-2.5 sm:px-3 py-1 shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs uppercase active:translate-x-0.5 active:translate-y-0.5"
 						>
 							{isMuted ? "UNMUTE" : "MUTE"}
 						</button>
 						<button
 							type="button"
 							onClick={onShowInstructions}
-							className="bg-[#00F0FF] hover:bg-[#80F8FF] text-black border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs uppercase active:translate-x-0.5 active:translate-y-0.5"
+							className="bg-[#00F0FF] hover:bg-[#80F8FF] text-black border-2 border-black px-2.5 sm:px-3 py-1 shadow-[2px_2px_0px_#000] cursor-pointer font-black text-xs uppercase active:translate-x-0.5 active:translate-y-0.5"
 						>
-							HOW TO PLAY
+							HELP
 						</button>
 					</div>
 				</div>
