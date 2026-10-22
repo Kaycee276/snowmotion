@@ -34,3 +34,6 @@ contracts/target
 contracts/**/target
 .stellar
 .soroban
+
+# Local skills
+osswc-issues-gen/
