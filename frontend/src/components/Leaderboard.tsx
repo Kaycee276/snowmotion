@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { gameApi } from "../services/gameApi";
 import { useGameStore } from "../store/gameStore";
-import type { Address } from "viem";
 import type { DifficultyLevel } from "../types/difficulty";
 
 interface LeaderboardEntry {
-	address: Address;
+	address: string;
 	score: number;
 	timestamp: number;
 	difficulty: DifficultyLevel;
@@ -47,7 +46,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 			const data = await gameApi.getLeaderboard();
 			const formattedEntries: LeaderboardEntry[] = data.map((entry) => ({
 				...entry,
-				address: entry.address as Address,
+				address: String(entry.address),
 				difficulty: (["easy", "medium", "hard"][entry.difficulty] || "medium") as DifficultyLevel,
 			}));
 			setEntries(formattedEntries);

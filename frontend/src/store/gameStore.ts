@@ -18,8 +18,13 @@ interface GameStore extends GameState {
 	gameHash: string | null;
 	playerNonce: number;
 	connectedAddress: string | null;
+	connectedWalletName: string | null;
+	isWalletModalOpen: boolean;
 
 	// Actions
+	openWalletModal: () => void;
+	closeWalletModal: () => void;
+	setConnectedWalletName: (name: string | null) => void;
 	setSelectedCharacter: (characterId: CharacterId) => void;
 	spawnItem: (item: FallingItem) => void;
 	removeItem: (id: string) => void;
@@ -73,7 +78,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	powerupMessage: null,
 	gameHash: null,
 	playerNonce: 0,
-	connectedAddress: null,
+	connectedAddress:
+		typeof window !== "undefined"
+			? localStorage.getItem("snowmotion_stellar_address")
+			: null,
+	connectedWalletName:
+		typeof window !== "undefined"
+			? localStorage.getItem("snowmotion_stellar_wallet")
+			: null,
+	isWalletModalOpen: false,
+
+	openWalletModal: () => set({ isWalletModalOpen: true }),
+	closeWalletModal: () => set({ isWalletModalOpen: false }),
+	setConnectedWalletName: (name: string | null) => {
+		set({ connectedWalletName: name });
+		if (typeof window !== "undefined") {
+			if (name) localStorage.setItem("snowmotion_stellar_wallet", name);
+			else localStorage.removeItem("snowmotion_stellar_wallet");
+		}
+	},
 
 	get currentSnowman() {
 		const parts = get().collectedParts;
@@ -356,5 +379,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	},
 
 	setLifeLossEffect: (effect) => set({ lifeLossEffect: effect }),
-	setConnectedAddress: (address) => set({ connectedAddress: address }),
+	setConnectedAddress: (address) => {
+		set({ connectedAddress: address });
+		if (typeof window !== "undefined") {
+			if (address) localStorage.setItem("snowmotion_stellar_address", address);
+			else localStorage.removeItem("snowmotion_stellar_address");
+		}
+	},
 }));

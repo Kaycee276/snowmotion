@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useWeb3 } from "../hooks/useWeb3";
 import { useGameStore } from "../store/gameStore";
 import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
-import type { Address } from "viem";
 
 interface GameOverModalProps {
 	score: number;
@@ -13,7 +12,7 @@ interface GameOverModalProps {
 }
 
 interface LeaderboardEntry {
-	address: Address;
+	address: string;
 	score: number;
 	timestamp: number;
 	difficulty: DifficultyLevel;
@@ -33,7 +32,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 	const { submitScore, isConnected, connect, address } = useWeb3();
 
 	const saveScoreLocally = (
-		walletAddress: Address,
+		walletAddress: string,
 		scoreValue: number,
 		difficultyLevel: DifficultyLevel
 	) => {

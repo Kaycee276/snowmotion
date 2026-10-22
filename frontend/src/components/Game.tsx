@@ -8,6 +8,7 @@ import Leaderboard from "./Leaderboard";
 import DifficultySelector from "./DifficultySelector";
 import Timer from "./Timer";
 import GameInstructions from "./GameInstructions";
+import StellarWalletModal from "./StellarWalletModal";
 import Item3D from "./Item3D";
 import { useGameStore } from "../store/gameStore";
 import { getSmartSpawnItem } from "../utils/smartSpawn";
@@ -28,6 +29,12 @@ const Game: React.FC = () => {
 		isBlizzardActive,
 		powerupMessage,
 		lifeLossEffect,
+		connectedAddress,
+		isWalletModalOpen,
+		openWalletModal,
+		closeWalletModal,
+		setConnectedAddress,
+		setConnectedWalletName,
 		spawnItem,
 		collectItem,
 		startGame,
@@ -259,10 +266,29 @@ const Game: React.FC = () => {
 					)}
 				</div>
 
-				{/* Right Side: Lives, Difficulty, Audio & Help Controls */}
-				<div className="flex items-center gap-2">
+				{/* Right Side: Wallet, Lives, Audio & Help Controls */}
+				<div className="flex items-center gap-1.5 sm:gap-2">
+					{/* Stellar Wallet Button */}
+					<button
+						type="button"
+						onClick={openWalletModal}
+						className={`border-3 border-black rounded-2xl px-2.5 py-1.5 font-black text-xs uppercase cursor-pointer shadow-[3px_3px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 ${
+							connectedAddress
+								? "bg-[#00FF66] text-black"
+								: "bg-[#FFE600] text-black hover:bg-[#fff04d]"
+						}`}
+						title={connectedAddress || "Connect Stellar Wallet"}
+					>
+						<span>⭐</span>
+						<span className="hidden sm:inline">
+							{connectedAddress
+								? `${connectedAddress.slice(0, 4)}...${connectedAddress.slice(-4)}`
+								: "Connect"}
+						</span>
+					</button>
+
 					{/* Lives */}
-					<div className="bg-[#FFFDF0] border-3 border-black shadow-[4px_4px_0px_#000] rounded-2xl px-3 py-2 flex items-center gap-1.5">
+					<div className="bg-[#FFFDF0] border-3 border-black shadow-[4px_4px_0px_#000] rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5">
 						<span className="text-sm sm:text-base">❤️</span>
 						<span className="font-black text-sm sm:text-base text-black">
 							{lives}
@@ -344,6 +370,16 @@ const Game: React.FC = () => {
 			<Leaderboard
 				isOpen={showLeaderboard}
 				onClose={() => setShowLeaderboard(false)}
+			/>
+
+			{/* Stellar Wallet Modal (Freighter, Albedo, Mobile) */}
+			<StellarWalletModal
+				isOpen={isWalletModalOpen}
+				onClose={closeWalletModal}
+				onConnected={(addr, name) => {
+					setConnectedAddress(addr);
+					setConnectedWalletName(name);
+				}}
 			/>
 		</div>
 	);

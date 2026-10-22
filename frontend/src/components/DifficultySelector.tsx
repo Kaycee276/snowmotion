@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useGameStore } from "../store/gameStore";
 import { DIFFICULTY_CONFIGS, type DifficultyLevel } from "../types/difficulty";
-import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import CharacterSelector from "./CharacterSelector";
 import { sound } from "../utils/soundEffects";
 
@@ -19,17 +18,20 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 	const {
 		difficulty,
 		setDifficulty,
-		setConnectedAddress,
 		selectedCharacter,
 		setSelectedCharacter,
+		connectedAddress,
+		connectedWalletName,
+		openWalletModal,
+		setConnectedAddress,
+		setConnectedWalletName,
 	} = useGameStore();
-	const { open } = useAppKit();
-	const { address, isConnected } = useAppKitAccount();
 	const [isMuted, setIsMuted] = React.useState(sound.getMuted());
 
-	useEffect(() => {
-		setConnectedAddress(address || null);
-	}, [address, setConnectedAddress]);
+	const handleDisconnect = () => {
+		setConnectedAddress(null);
+		setConnectedWalletName(null);
+	};
 
 	const handleSoundToggle = () => {
 		const muted = sound.toggleMute();
@@ -127,7 +129,7 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 				</div>
 
 				{/* Wallet Status Banner */}
-				{!isConnected ? (
+				{!connectedAddress ? (
 					<div className="mb-4 p-3 bg-[#FFE600] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000]">
 						<div className="flex items-center justify-between gap-2">
 							<span className="text-xs font-black text-black">
@@ -135,25 +137,34 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 							</span>
 							<button
 								type="button"
-								onClick={() => open()}
-								className="bg-black text-white hover:bg-gray-800 px-3 py-1.5 rounded-lg font-black text-xs uppercase cursor-pointer border border-white"
+								onClick={openWalletModal}
+								className="bg-black text-white hover:bg-gray-800 px-3 py-1.5 rounded-lg font-black text-xs uppercase cursor-pointer border border-white shadow-[2px_2px_0px_#000]"
 							>
-								Connect
+								CONNECT WALLET 🚀
 							</button>
 						</div>
 					</div>
 				) : (
 					<div className="mb-4 p-2.5 bg-[#00FF66] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000] flex items-center justify-between">
 						<span className="text-xs font-black text-black uppercase">
-							✓ Wallet Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+							✓ {connectedWalletName || "Stellar"}: {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
 						</span>
-						<button
-							type="button"
-							onClick={() => open({ view: "Account" })}
-							className="text-[10px] font-black underline cursor-pointer"
-						>
-							Change
-						</button>
+						<div className="flex items-center gap-2">
+							<button
+								type="button"
+								onClick={openWalletModal}
+								className="text-[10px] font-black underline cursor-pointer"
+							>
+								Switch
+							</button>
+							<button
+								type="button"
+								onClick={handleDisconnect}
+								className="text-[10px] font-black text-red-700 underline cursor-pointer"
+							>
+								Disconnect
+							</button>
+						</div>
 					</div>
 				)}
 
