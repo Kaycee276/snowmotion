@@ -1,6 +1,6 @@
 # ❄️ SnowMotion - Web3 Neo-Brutalist Arcade
 
-A high-performance, tamper-proof Web3 arcade game built on **Stellar Mainnet** with server-side score verification, Neon PostgreSQL persistence via Prisma ORM, multi-character selection, 3D neo-brutalist visual items, and a built-in retro Web Audio synthesizer.
+A high-performance, tamper-proof Web3 arcade game built on **Stellar Mainnet** with server-side score verification, Turso / SQLite persistence via Prisma ORM, multi-character selection, 3D neo-brutalist visual items, and a built-in retro Web Audio synthesizer.
 
 ---
 
@@ -80,6 +80,6 @@ GitHub Actions runs automatically on pushes and pull requests targeting the defa
 ## 🛠️ Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, Reown AppKit / viem.
-- **Backend:** Node.js, Express, Prisma ORM, Neon PostgreSQL.
+- **Backend:** Node.js, Express, Prisma ORM, Turso / SQLite (libSQL).
 - **Blockchain:** Stellar Mainnet (`XLM`).
 - **Audio:** Web Audio API (native hardware-accelerated synthesis).
