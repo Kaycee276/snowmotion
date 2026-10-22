@@ -28,7 +28,7 @@ const FallingItemComponent: React.FC<FallingItemProps> = React.memo(({ item, onC
 			}}
 		>
 			<div
-				className={`relative p-1.5 sm:p-2 bg-white/95 rounded-xl border-3 border-black shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none hover:scale-110 transition-transform ${
+				className={`relative p-1.5 sm:p-2 bg-white/95 border-3 border-black shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none hover:scale-110 transition-transform ${
 					isSpecial ? "ring-2 ring-yellow-400 animate-pulse" : ""
 				}`}
 			>

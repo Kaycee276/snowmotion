@@ -219,7 +219,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				isGameOver: false,
 				isPaused: true, // Start paused to give player a moment
 				timerActive: true,
-				powerupMessage: "WELCOME BACK! GAME RESUMED ⏸️",
+				powerupMessage: "WELCOME BACK! GAME RESUMED",
 			});
 			setTimeout(() => set({ powerupMessage: null }), 3000);
 			return true;
@@ -269,7 +269,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			set({
 				timerSeconds: newTime,
 				lives: newLives,
-				powerupMessage: "+8s TIME BOOST! ☕",
+				powerupMessage: "+8s TIME BOOST",
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
@@ -282,7 +282,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			set({
 				isBlizzardActive: true,
 				blizzardTimeLeft: 6,
-				powerupMessage: "BLIZZARD FREEZE! 🧊",
+				powerupMessage: "BLIZZARD FREEZE - SLOWDOWN",
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
@@ -298,7 +298,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			set({
 				score: newScore,
 				combo: newCombo,
-				powerupMessage: "+3 GOLDEN STAR! ⭐",
+				powerupMessage: "+3 POINTS - GOLDEN STAR",
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
@@ -320,7 +320,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				lives: newLives,
 				combo: 0,
 				lifeLossEffect: true,
-				powerupMessage: "HAZARD HIT! -1 LIFE 💥",
+				powerupMessage: "HAZARD HIT! -1 LIFE",
 				items: state.items.filter((item) => item.id !== itemId),
 				isGameOver: isOver,
 				isPlaying: !isOver,
@@ -356,7 +356,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					collectedParts: {},
 					items: state.items.filter((item) => item.id !== itemId),
 					timerSeconds: Math.min(state.timerSeconds + 12, 60),
-					powerupMessage: `${charConfig.name} COMPLETED! +${pointsToAdd} 🏆`,
+					powerupMessage: `${charConfig.name.toUpperCase()} COMPLETED! +${pointsToAdd} POINTS`,
 				});
 				setTimeout(() => set({ powerupMessage: null }), 2000);
 			} else {
@@ -370,7 +370,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			sound.playCatch();
 			set({
 				collectedParts: { ...state.collectedParts, [bonusPart]: true },
-				powerupMessage: `BONUS ACCESSORY EQUIPPED! ✨`,
+				powerupMessage: "BONUS ACCESSORY EQUIPPED!",
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
@@ -384,7 +384,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				items: state.items.filter((item) => item.id !== itemId),
 				timerSeconds: newTimerSeconds,
 				lifeLossEffect: true,
-				powerupMessage: `WRONG ITEM! -${WRONG_ITEM_PENALTY}s ❌`,
+				powerupMessage: `WRONG ITEM! -${WRONG_ITEM_PENALTY}s PENALTY`,
 			});
 			setTimeout(() => {
 				set({ lifeLossEffect: false, powerupMessage: null });

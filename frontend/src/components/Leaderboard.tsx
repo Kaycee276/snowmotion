@@ -95,43 +95,45 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 	};
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-xs z-50 p-2 sm:p-4 overflow-y-auto">
-			<div className="bg-[#FFFDF0] border-4 border-black rounded-3xl p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[8px_8px_0px_#000] relative">
+		<div className="fixed inset-0 flex items-center justify-center bg-black/75 backdrop-blur-xs z-50 p-4 sm:p-6 overflow-y-auto">
+			<div className="bg-[#FFFDF0] border-4 border-black p-6 sm:p-8 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[8px_8px_0px_#000] relative">
 				{/* Header */}
-				<div className="flex items-start justify-between pb-3 border-b-3 border-black mb-3">
+				<div className="flex items-start justify-between pb-4 border-b-3 border-black mb-5">
 					<div>
-						<div className="inline-block bg-[#FFE600] border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_#000] mb-1">
+						<div className="inline-block bg-[#FFE600] border-3 border-black px-4 py-1.5 shadow-[3px_3px_0px_#000] mb-2">
 							<h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
-								🏆 STELLAR LEADERBOARD
+								STELLAR LEADERBOARD
 							</h2>
 						</div>
-						<p className="text-xs font-bold text-gray-700">
+						<p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
 							Verified scores submitted to the Stellar smart contract
 						</p>
 					</div>
 					<button
+						type="button"
 						onClick={onClose}
-						className="bg-black text-white hover:bg-red-600 border-2 border-black w-8 h-8 rounded-xl font-black text-lg flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#000]"
+						className="bg-black text-white hover:bg-red-600 border-2 border-black w-9 h-9 font-black text-lg flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
 					>
 						✕
 					</button>
 				</div>
 
 				{/* Filter Tabs */}
-				<div className="flex flex-wrap gap-2 mb-3">
+				<div className="flex flex-wrap gap-2.5 mb-5">
 					{(["all", "easy", "medium", "hard"] as const).map((diff) => {
 						const isSelected = selectedDifficulty === diff;
 						return (
 							<button
 								key={diff}
+								type="button"
 								onClick={() => setSelectedDifficulty(diff)}
-								className={`px-3 py-1 rounded-xl font-black text-xs uppercase border-2 border-black cursor-pointer transition-all ${
+								className={`px-4 py-2 font-black text-xs uppercase border-2 border-black cursor-pointer transition-all ${
 									isSelected
 										? "bg-[#00F0FF] shadow-[3px_3px_0px_#000] -translate-y-0.5 text-black"
-										: "bg-white hover:bg-gray-100 shadow-[1px_1px_0px_#000] text-gray-800"
+										: "bg-white hover:bg-gray-100 shadow-[2px_2px_0px_#000] text-gray-800"
 								}`}
 							>
-								{diff === "all" ? "⭐ All Difficulties" : diff}
+								{diff === "all" ? "ALL DIFFICULTIES" : diff}
 							</button>
 						);
 					})}
@@ -139,21 +141,20 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 
 				{/* Notice */}
 				{selectedDifficulty === "all" && (
-					<div className="mb-3 px-3 py-1.5 bg-[#00FF66]/30 border-2 border-black rounded-xl text-[11px] font-bold text-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
-						<span>💡</span>
-						<span>Scores are normalized (Easy: 1x, Medium: 1.5x, Hard: 2x) for competitive fairness!</span>
+					<div className="mb-5 px-4 py-2.5 bg-[#00FF66]/20 border-2 border-black text-xs font-black uppercase text-black shadow-[2px_2px_0px_#000]">
+						Scores are normalized (Easy: 1x, Medium: 1.5x, Hard: 2x) for competitive fairness
 					</div>
 				)}
 
 				{/* Table / List */}
-				<div className="flex-1 overflow-y-auto space-y-2 pr-1">
+				<div className="flex-1 overflow-y-auto space-y-3 pr-1">
 					{isLoading ? (
-						<div className="text-center py-12 font-black text-sm text-gray-600">
-							LOADING BLOCKCHAIN SCORES...
+						<div className="text-center py-16 font-black text-sm text-gray-600 uppercase tracking-wider">
+							Loading blockchain scores...
 						</div>
 					) : filteredEntries.length === 0 ? (
-						<div className="text-center py-12 font-black text-sm text-gray-600">
-							NO SCORES YET. BE THE FIRST TO BUILD!
+						<div className="text-center py-16 font-black text-sm text-gray-600 uppercase tracking-wider">
+							No scores yet. Be the first to build!
 						</div>
 					) : (
 						filteredEntries.map((entry, idx) => {
@@ -173,34 +174,34 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 							return (
 								<div
 									key={`${entry.address}-${entry.timestamp}-${idx}`}
-									className={`flex items-center justify-between p-3 rounded-2xl border-3 border-black shadow-[3px_3px_0px_#000] transition-all ${medalBg} ${
-										isMe ? "ring-2 ring-[#FF007A]" : ""
+									className={`flex items-center justify-between p-4 border-3 border-black shadow-[3px_3px_0px_#000] transition-all ${medalBg} ${
+										isMe ? "ring-3 ring-[#FF007A]" : ""
 									}`}
 								>
-									<div className="flex items-center gap-3">
-										<div className="w-8 h-8 rounded-xl bg-black text-white font-black text-sm flex items-center justify-center">
+									<div className="flex items-center gap-4">
+										<div className="w-9 h-9 bg-black text-white font-black text-sm flex items-center justify-center shrink-0">
 											#{idx + 1}
 										</div>
 										<div>
-											<div className="font-black text-xs sm:text-sm text-black flex items-center gap-1.5">
+											<div className="font-black text-xs sm:text-sm text-black flex items-center gap-2">
 												<span>{formatAddress(entry.address)}</span>
 												{isMe && (
-													<span className="bg-[#FF007A] text-white text-[9px] font-black px-1.5 rounded border border-black">
+													<span className="bg-[#FF007A] text-white text-[9px] font-black px-2 py-0.5 border border-black uppercase">
 														YOU
 													</span>
 												)}
 											</div>
-											<div className="text-[10px] font-bold uppercase text-gray-600">
+											<div className="text-[10px] font-black uppercase text-gray-600 mt-0.5">
 												{entry.difficulty} mode • {new Date(entry.timestamp).toLocaleDateString()}
 											</div>
 										</div>
 									</div>
 
 									<div className="text-right">
-										<div className="font-black text-lg sm:text-xl text-black">
+										<div className="font-black text-xl sm:text-2xl text-black">
 											{selectedDifficulty === "all" ? getNormalizedScore(entry) : entry.score}
 										</div>
-										<div className="text-[9px] font-bold text-gray-600 uppercase">
+										<div className="text-[9px] font-black text-gray-600 uppercase">
 											{selectedDifficulty === "all" ? "Normalized" : "Points"}
 										</div>
 									</div>

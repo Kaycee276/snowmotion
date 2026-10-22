@@ -26,8 +26,8 @@ export const MOBILE_STELLAR_WALLETS: MobileStellarWallet[] = [
 	{
 		id: "lobstr",
 		name: "LOBSTR Wallet",
-		icon: "🦞",
-		badge: "Most Popular",
+		icon: "L",
+		badge: "Popular",
 		description: "Leading mobile wallet for Stellar Lumens (XLM) & Stellar assets.",
 		url: "https://lobstr.co",
 		iosUrl: "https://apps.apple.com/app/lobstr-stellar-lumens-wallet/id1404357892",
@@ -36,7 +36,7 @@ export const MOBILE_STELLAR_WALLETS: MobileStellarWallet[] = [
 	{
 		id: "freighter-mobile",
 		name: "Freighter Mobile",
-		icon: "🚀",
+		icon: "F",
 		badge: "Official SDF",
 		description: "Official self-custody wallet created by the Stellar Development Foundation.",
 		url: "https://www.freighter.app",
@@ -46,15 +46,15 @@ export const MOBILE_STELLAR_WALLETS: MobileStellarWallet[] = [
 	{
 		id: "albedo",
 		name: "Albedo Web Signer",
-		icon: "⚡",
-		badge: "Instant / No App",
+		icon: "A",
+		badge: "Instant Web",
 		description: "Zero install needed! Works on any mobile or desktop browser via secure popup.",
 		url: "https://albedo.link",
 	},
 	{
 		id: "xbull",
 		name: "xBull Wallet",
-		icon: "🐂",
+		icon: "X",
 		badge: "Open Source",
 		description: "Multi-platform open-source Stellar wallet for power users.",
 		url: "https://xbull.app",
