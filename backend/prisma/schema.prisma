@@ -1,0 +1,24 @@
+// Prisma Schema for Neon PostgreSQL
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GameSession {
+  id            String    @id @default(uuid())
+  gameHash      String    @unique @map("game_hash")
+  playerAddress String    @map("player_address")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  isUsed        Boolean   @default(false) @map("is_used")
+  score         Int?
+  difficulty    Int?
+  submittedAt   DateTime? @map("submitted_at")
+
+  @@index([gameHash])
+  @@index([playerAddress])
+  @@map("game_sessions")
+}

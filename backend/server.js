@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { ethers } = require("ethers");
 const crypto = require("crypto");
-const supabase = require("./services/supabase");
+const prisma = require("./services/prisma");
 const { CONTRACT_ABI } = require("./services/abi");
 require("dotenv").config();
 
@@ -86,21 +86,18 @@ app.post("/api/start-game", rateLimitMiddleware(20, 60000), async (req, res) => 
 			ethers.toUtf8Bytes(`${player.toLowerCase()}-${Date.now()}-${salt}`)
 		);
 
-		// Store in database
-		const { error } = await supabase.from("game_sessions").insert({
-			game_hash: gameHash,
-			player_address: player.toLowerCase(),
+		// Store in database using Prisma (Neon PostgreSQL)
+		await prisma.gameSession.create({
+			data: {
+				gameHash,
+				playerAddress: player.toLowerCase(),
+			},
 		});
-
-		if (error) {
-			console.error("Database error:", error);
-			return res.status(500).json({ error: "Failed to create game session" });
-		}
 
 		res.json({ gameHash });
 	} catch (error) {
 		console.error("Start game error:", error);
-		res.status(500).json({ error: "Internal server error" });
+		res.status(500).json({ error: "Failed to create game session" });
 	}
 });
 
@@ -133,24 +130,21 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 			return res.status(400).json({ error: "Difficulty must be 0 (easy), 1 (medium), or 2 (hard)" });
 		}
 
-		// 2. Check game session in database
-		const { data: session, error: fetchError } = await supabase
-			.from("game_sessions")
-			.select("*")
-			.eq("game_hash", gameHash)
-			.eq("player_address", player.toLowerCase())
-			.single();
+		// 2. Check game session in database via Prisma (Neon PostgreSQL)
+		const session = await prisma.gameSession.findUnique({
+			where: { gameHash },
+		});
 
-		if (fetchError || !session) {
+		if (!session || session.playerAddress.toLowerCase() !== player.toLowerCase()) {
 			return res.status(400).json({ error: "Invalid game session" });
 		}
 
-		if (session.is_used) {
+		if (session.isUsed) {
 			return res.status(400).json({ error: "Game session already used" });
 		}
 
 		// 3. Anti-cheat: Duration and score pacing validation
-		const createdAtMs = new Date(session.created_at).getTime();
+		const createdAtMs = new Date(session.createdAt).getTime();
 		const nowMs = Date.now();
 		const elapsedSeconds = Math.max(1, Math.floor((nowMs - createdAtMs) / 1000));
 
@@ -206,16 +200,16 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 			signature
 		);
 
-		// Mark session as used in database
-		await supabase
-			.from("game_sessions")
-			.update({
-				is_used: true,
+		// Mark session as used in database using Prisma (Neon PostgreSQL)
+		await prisma.gameSession.update({
+			where: { id: session.id },
+			data: {
+				isUsed: true,
 				score: parsedScore,
 				difficulty: parsedDifficulty,
-				submitted_at: new Date().toISOString(),
-			})
-			.eq("id", session.id);
+				submittedAt: new Date(),
+			},
+		});
 
 		res.json({
 			success: true,
@@ -231,20 +225,39 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 	}
 });
 
-// Get leaderboard from contract
+// Get leaderboard from contract (with Neon/Prisma fallback)
 app.get("/api/leaderboard", async (req, res) => {
 	try {
-		if (!contract) {
-			return res.status(503).json({ error: "Contract service unavailable" });
+		if (contract) {
+			try {
+				const leaderboard = await contract.getLeaderboard();
+				const formattedLeaderboard = leaderboard.map((entry) => ({
+					address: entry.player,
+					score: Number(entry.score),
+					difficulty: Number(entry.difficulty),
+					timestamp: Number(entry.timestamp) * 1000,
+				}));
+				return res.json(formattedLeaderboard);
+			} catch (contractErr) {
+				console.warn("Contract call failed, falling back to database leaderboard:", contractErr.message);
+			}
 		}
-		const leaderboard = await contract.getLeaderboard();
-		const formattedLeaderboard = leaderboard.map((entry) => ({
-			address: entry.player,
-			score: Number(entry.score),
-			difficulty: Number(entry.difficulty),
-			timestamp: Number(entry.timestamp) * 1000,
+
+		// Fallback to Neon PostgreSQL via Prisma
+		const sessions = await prisma.gameSession.findMany({
+			where: { isUsed: true, score: { not: null } },
+			orderBy: { score: "desc" },
+			take: 50,
+		});
+
+		const formatted = sessions.map((s) => ({
+			address: s.playerAddress,
+			score: s.score || 0,
+			difficulty: s.difficulty ?? 1,
+			timestamp: s.submittedAt ? new Date(s.submittedAt).getTime() : Date.now(),
 		}));
-		res.json(formattedLeaderboard);
+
+		res.json(formatted);
 	} catch (error) {
 		console.error("Error fetching leaderboard:", error);
 		res.status(500).json({ error: "Failed to fetch leaderboard" });
