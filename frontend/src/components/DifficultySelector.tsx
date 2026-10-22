@@ -45,7 +45,7 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 				<div className="flex items-center justify-between pb-3 border-b-3 border-black mb-4">
 					<div className="flex items-center gap-2">
 						<span className="bg-[#FFE600] border-2 border-black font-black text-xs px-2 py-1 rounded shadow-[2px_2px_0px_#000]">
-							SOMNIA L1
+							STELLAR MAINNET
 						</span>
 						<span className="font-black text-xs text-black uppercase tracking-wider">
 							Web3 Arcade
@@ -131,7 +131,7 @@ const DifficultySelector: React.FC<DifficultySelectorProps> = ({
 					<div className="mb-4 p-3 bg-[#FFE600] border-3 border-black rounded-xl shadow-[3px_3px_0px_#000]">
 						<div className="flex items-center justify-between gap-2">
 							<span className="text-xs font-black text-black">
-								Connect Somnia wallet to submit scores!
+								Connect Stellar wallet to submit scores!
 							</span>
 							<button
 								type="button"

@@ -120,10 +120,10 @@ export const GameInstructions: React.FC<GameInstructionsProps> = ({
 					{/* 4. On-chain Verification */}
 					<div className="border-3 border-black p-3 sm:p-4 rounded-2xl bg-[#00F0FF]/20 shadow-[4px_4px_0px_#000]">
 						<h2 className="text-sm sm:text-base font-black uppercase text-black mb-1">
-							🔐 4. Cryptographic Proof on Somnia L1
+							🔐 4. Cryptographic Proof on Stellar Mainnet
 						</h2>
 						<p className="text-xs font-bold text-gray-800">
-							Each game session hash is generated server-side. Scores are cryptographically attested and signed before being recorded on the Somnia Mainnet smart contract leaderboard.
+							Each game session hash is generated server-side. Scores are cryptographically attested and signed before being recorded on the Stellar Mainnet smart contract leaderboard.
 						</p>
 					</div>
 				</div>

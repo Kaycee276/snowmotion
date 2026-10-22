@@ -125,7 +125,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 				{/* Wallet Status */}
 				{!isConnected ? (
 					<p className="text-xs font-bold text-red-600 mb-3 bg-red-50 border border-black p-2 rounded-lg">
-						Connect your wallet to record this score on Somnia Mainnet!
+						Connect your wallet to record this score on Stellar Mainnet!
 					</p>
 				) : (
 					<div className="mb-3 text-xs font-bold text-black flex items-center justify-center gap-2">
@@ -166,12 +166,12 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
 						</div>
 						{txHash && (
 							<a
-								href={`https://explorer.somnia.network/tx/${txHash}`}
+								href={`https://stellar.expert/explorer/public/tx/${txHash}`}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-[11px] font-bold text-black underline break-all block"
 							>
-								View Somnia Explorer ↗
+								View Stellar Expert ↗
 							</a>
 						)}
 					</div>

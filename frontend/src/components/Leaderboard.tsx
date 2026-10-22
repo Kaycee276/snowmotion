@@ -103,11 +103,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 					<div>
 						<div className="inline-block bg-[#FFE600] border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_#000] mb-1">
 							<h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
-								🏆 SOMNIA LEADERBOARD
+								🏆 STELLAR LEADERBOARD
 							</h2>
 						</div>
 						<p className="text-xs font-bold text-gray-700">
-							Verified scores submitted to the Somnia smart contract
+							Verified scores submitted to the Stellar smart contract
 						</p>
 					</div>
 					<button

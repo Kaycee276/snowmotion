@@ -1,6 +1,6 @@
 # ❄️ SnowMotion - Web3 Neo-Brutalist Arcade
 
-A high-performance, tamper-proof Web3 arcade game built on **Somnia Mainnet** with server-side score verification, multi-character selection, 3D neo-brutalist visual items, and a built-in retro Web Audio synthesizer.
+A high-performance, tamper-proof Web3 arcade game built on **Stellar Mainnet** with server-side score verification, Neon PostgreSQL persistence via Prisma ORM, multi-character selection, 3D neo-brutalist visual items, and a built-in retro Web Audio synthesizer.
 
 ---
 
@@ -15,10 +15,10 @@ A high-performance, tamper-proof Web3 arcade game built on **Somnia Mainnet** wi
   - ⭐ **Golden Star:** Grants $+3$ points and boosts combo streak.
   - 💥 **Spike Hazard:** Dangerous mine to dodge (clicking costs $-1$ life).
 - **Zero-Dependency Sound Synthesizer:** Built-in Web Audio API sound effects for chime catches, fanfare combos, retro error buzzers, and a persistent mute toggle.
-- **Cryptographic Anti-Cheat & Rate Limiting:**
-  - Server-side game session hashing and duration pacing validation.
-  - Rate-limited API endpoints protecting relayer gas wallets from drain attacks.
-  - EIP-712-style cryptographic signatures verified by the smart contract on Somnia L1.
+- **Serverless Database & Anti-Cheat:**
+  - **Neon PostgreSQL & Prisma ORM:** High-performance serverless database for tracking game sessions, score validation, and fallback leaderboards.
+  - **Cryptographic Attestation:** Server-side game session hashing, duration pacing validation, and rate-limited API endpoints.
+  - **Stellar Mainnet Ledger:** Cryptographically attested scores verified and recorded on-chain.
 
 ---
 
@@ -34,11 +34,11 @@ snowmotion/
 │   │   ├── components/     # Neo-brutalist UI components & 3D assets
 │   │   ├── store/          # Zustand game store
 │   │   ├── types/          # Character & game interfaces
-│   │   └── utils/          # Smart spawning & Web Audio engine
+│   │   └── utils/          # Smart spawning & Stellar network config
 │   └── package.json
 ├── backend/                # Node.js + Express API server
-│   ├── services/           # Supabase & Contract ABI services
-│   ├── database/           # PostgreSQL schema
+│   ├── prisma/             # Prisma ORM schema for Neon PostgreSQL
+│   ├── services/           # Prisma client & Contract ABI services
 │   ├── server.js           # Server with anti-cheat & rate limiting
 │   └── package.json
 └── README.md
@@ -53,9 +53,10 @@ snowmotion/
 cd backend
 npm install
 # Configure your .env file
+echo "DATABASE_URL=postgresql://user:password@ep-cool-snowflake-123456.us-east-2.aws.neon.tech/neondb?sslmode=require" >> .env
 echo "GAME_SIGNING_KEY=your_private_key_here" >> .env
 echo "CONTRACT_ADDRESS=your_contract_address" >> .env
-echo "RPC_URL=https://api.infra.mainnet.somnia.network" >> .env
+echo "RPC_URL=https://mainnet.sorobanrpc.com" >> .env
 npm run dev
 ```
 
@@ -71,6 +72,7 @@ GitHub Actions runs automatically on pushes and pull requests targeting the defa
 - Type checking (`tsc -b`)
 - Production build (`vite build`)
 - Linting (`eslint .`)
+- Prisma client generation (`npx prisma generate`)
 - Backend syntax verification (`node --check server.js`)
 
 ---
@@ -78,6 +80,6 @@ GitHub Actions runs automatically on pushes and pull requests targeting the defa
 ## 🛠️ Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, Reown AppKit / viem.
-- **Backend:** Node.js, Express, ethers.js, Supabase.
-- **Blockchain:** Somnia Mainnet (Chain ID `5031`).
+- **Backend:** Node.js, Express, Prisma ORM, Neon PostgreSQL.
+- **Blockchain:** Stellar Mainnet (`XLM`).
 - **Audio:** Web Audio API (native hardware-accelerated synthesis).
