@@ -16,6 +16,24 @@ interface LeaderboardProps {
 	onClose: () => void;
 }
 
+// Difficulty multipliers for fair ranking
+const getDifficultyMultiplier = (difficulty: DifficultyLevel): number => {
+	switch (difficulty) {
+		case "easy":
+			return 1;
+		case "medium":
+			return 1.5;
+		case "hard":
+			return 2;
+		default:
+			return 1;
+	}
+};
+
+const getNormalizedScore = (entry: LeaderboardEntry): number => {
+	return Math.round(entry.score * getDifficultyMultiplier(entry.difficulty));
+};
+
 const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
 	const { address: connectedAddress } = useAppKitAccount();
 	const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -35,24 +53,6 @@ const Leaderboard = ({ isOpen, onClose }: LeaderboardProps) => {
 			return () => clearInterval(interval);
 		}
 	}, [isOpen]);
-
-	// Difficulty multipliers for fair ranking
-	const getDifficultyMultiplier = (difficulty: DifficultyLevel): number => {
-		switch (difficulty) {
-			case "easy":
-				return 1;
-			case "medium":
-				return 1.5;
-			case "hard":
-				return 2;
-			default:
-				return 1;
-		}
-	};
-
-	const getNormalizedScore = (entry: LeaderboardEntry): number => {
-		return Math.round(entry.score * getDifficultyMultiplier(entry.difficulty));
-	};
 
 	useEffect(() => {
 		if (selectedDifficulty === "all") {
