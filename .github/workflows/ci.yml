@@ -62,3 +62,26 @@ jobs:
 
       - name: Syntax Check
         run: node --check server.js
+
+  contract-check:
+    name: Stellar Smart Contract Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts -> contracts/target
+
+      - name: Run Contract Unit Tests
+        run: cargo test --manifest-path contracts/Cargo.toml
+
+      - name: Check Contract WASM Compilation
+        run: cargo check --target wasm32-unknown-unknown --release --manifest-path contracts/contracts/snowmotion_leaderboard/Cargo.toml
