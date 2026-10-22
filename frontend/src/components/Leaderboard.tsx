@@ -69,8 +69,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 	useEffect(() => {
 		if (isOpen) {
 			loadLeaderboard();
-			const interval = setInterval(loadLeaderboard, 10000);
-			return () => clearInterval(interval);
 		}
 	}, [isOpen]);
 
@@ -109,13 +107,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 							Verified scores submitted to the Stellar smart contract
 						</p>
 					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						className="bg-black text-white hover:bg-red-600 border-2 border-black w-9 h-9 font-black text-lg flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
-					>
-						✕
-					</button>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							onClick={loadLeaderboard}
+							disabled={isLoading}
+							title="Refresh leaderboard"
+							className="bg-white hover:bg-gray-100 disabled:opacity-50 text-black border-2 border-black px-3 h-9 font-black text-xs uppercase flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+						>
+							<span className={isLoading ? "inline-block animate-spin" : ""}>↻</span>
+							<span className="hidden sm:inline">REFRESH</span>
+						</button>
+						<button
+							type="button"
+							onClick={onClose}
+							className="bg-black text-white hover:bg-red-600 border-2 border-black w-9 h-9 font-black text-lg flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
+						>
+							✕
+						</button>
+					</div>
 				</div>
 
 				{/* Filter Tabs */}
