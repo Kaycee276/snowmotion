@@ -7,8 +7,24 @@ const { rpc: SorobanRpc, Keypair, Networks, TransactionBuilder, Contract, native
 
 const RPC_URL = process.env.RPC_URL || "https://soroban-testnet.stellar.org";
 const CONTRACT_ID = process.env.CONTRACT_ADDRESS || "CBKNJITAAMAECDIIARJVDVVEH7M5UKD7NKBCZYYDZQVEZUY7OPQ4ZIYZ";
-const STELLAR_SECRET_KEY = process.env.STELLAR_SECRET_KEY || process.env.GAME_SIGNING_KEY || "SDVZOLWJ3D2RBCDB3JJ3FT4S75BUDM7MJ3WN7G3JNI2HWI4S77JSGA7H";
 const NETWORK_PASSPHRASE = process.env.STELLAR_NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+
+function getCleanSecretKey() {
+	const raw = (process.env.STELLAR_SECRET_KEY || process.env.GAME_SIGNING_KEY || "SDVZOLWJ3D2RBCDB3JJ3FT4S75BUDM7MJ3WN7G3JNI2HWI4S77JSGA7H").trim();
+	return raw.replace(/^0x/, "");
+}
+
+function getKeypair() {
+	return Keypair.fromSecret(getCleanSecretKey());
+}
+
+function getRelayerAddress() {
+	try {
+		return getKeypair().publicKey();
+	} catch (e) {
+		return null;
+	}
+}
 
 function isValidStellarAddress(addr) {
 	return typeof addr === "string" && /^G[A-Z2-7]{55}$/.test(addr);
@@ -40,7 +56,7 @@ async function submitScoreOnChain({ player, score, difficulty, gameHash }) {
 
 	// Attempt 1: Direct Soroban RPC via @stellar/stellar-sdk
 	try {
-		const keypair = Keypair.fromSecret(STELLAR_SECRET_KEY);
+		const keypair = getKeypair();
 		const server = new SorobanRpc.Server(RPC_URL);
 		const contract = new Contract(CONTRACT_ID);
 
@@ -120,7 +136,7 @@ async function getOnChainLeaderboard() {
 	try {
 		const server = new SorobanRpc.Server(RPC_URL);
 		const contract = new Contract(CONTRACT_ID);
-		const keypair = Keypair.fromSecret(STELLAR_SECRET_KEY);
+		const keypair = getKeypair();
 		const account = await server.getAccount(keypair.publicKey());
 
 		const op = contract.call("get_leaderboard");
@@ -154,4 +170,5 @@ module.exports = {
 	submitScoreOnChain,
 	getOnChainLeaderboard,
 	isValidStellarAddress,
+	getRelayerAddress,
 };

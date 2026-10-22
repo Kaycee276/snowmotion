@@ -1,17 +1,19 @@
 const express = require("express");
 const cors = require("cors");
-const { ethers } = require("ethers");
 const crypto = require("crypto");
 const prisma = require("./services/prisma");
-const { CONTRACT_ABI } = require("./services/abi");
-const { submitScoreOnChain, getOnChainLeaderboard } = require("./services/stellar");
+const {
+	submitScoreOnChain,
+	getOnChainLeaderboard,
+	getRelayerAddress,
+} = require("./services/stellar");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Validate required environment variables (optional during tests, required in production)
-const requiredEnvVars = ["GAME_SIGNING_KEY", "CONTRACT_ADDRESS", "RPC_URL"];
+const requiredEnvVars = ["CONTRACT_ADDRESS", "RPC_URL"];
 const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingVars.length > 0) {
@@ -26,25 +28,6 @@ app.use(
 	})
 );
 app.use(express.json());
-
-// Initialize wallet and provider if configured
-let provider = null;
-let wallet = null;
-let contract = null;
-
-if (process.env.RPC_URL && process.env.GAME_SIGNING_KEY && process.env.CONTRACT_ADDRESS) {
-	try {
-		provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-		wallet = new ethers.Wallet(process.env.GAME_SIGNING_KEY, provider);
-		contract = new ethers.Contract(
-			process.env.CONTRACT_ADDRESS,
-			CONTRACT_ABI,
-			wallet
-		);
-	} catch (err) {
-		console.error("Error initializing ethers wallet/contract:", err.message);
-	}
-}
 
 // In-memory rate limiting to prevent spam and relayer gas drain
 const rateLimits = new Map();
@@ -72,11 +55,12 @@ const rateLimitMiddleware = (limit = 10, windowMs = 60000) => (req, res, next) =
 	next();
 };
 
-// Validate Stellar (G...) or EVM (0x...) addresses
+// Validate Stellar (G...) or legacy EVM (0x...) addresses
 const isValidPlayerAddress = (addr) => {
 	if (!addr || typeof addr !== "string") return false;
 	const isStellar = /^G[A-Z2-7]{55}$/.test(addr);
-	return isStellar || ethers.isAddress(addr);
+	const isLegacyHex = /^0x[a-fA-F0-9]{40}$/.test(addr);
+	return isStellar || isLegacyHex;
 };
 
 // Start game session
@@ -85,14 +69,17 @@ app.post("/api/start-game", rateLimitMiddleware(20, 60000), async (req, res) => 
 		const { player } = req.body;
 
 		if (!player || !isValidPlayerAddress(player)) {
-			return res.status(400).json({ error: "Valid Stellar or EVM player address required" });
+			return res.status(400).json({ error: "Valid Stellar player address required" });
 		}
 
 		// Generate cryptographically secure game hash
 		const salt = crypto.randomBytes(32).toString("hex");
-		const gameHash = ethers.keccak256(
-			ethers.toUtf8Bytes(`${player.toLowerCase()}-${Date.now()}-${salt}`)
-		);
+		const gameHash =
+			"0x" +
+			crypto
+				.createHash("sha256")
+				.update(`${player.toLowerCase()}-${Date.now()}-${salt}`)
+				.digest("hex");
 
 		// Store in database using Prisma (Turso SQLite)
 		await prisma.gameSession.create({
@@ -183,11 +170,14 @@ app.post("/api/submit-score", rateLimitMiddleware(10, 60000), async (req, res) =
 		const nonce = crypto.randomInt(0, 2 ** 32);
 
 		// Create message hash for signing (supports Stellar StrKey and EVM addresses)
-		const messageHash = ethers.keccak256(
-			ethers.toUtf8Bytes(
-				`${player}-${parsedScore}-${parsedDifficulty}-${timestamp}-${nonce}-${gameHash}`
-			)
-		);
+		const messageHash =
+			"0x" +
+			crypto
+				.createHash("sha256")
+				.update(
+					`${player}-${parsedScore}-${parsedDifficulty}-${timestamp}-${nonce}-${gameHash}`
+				)
+				.digest("hex");
 
 		let txHash = null;
 		try {
@@ -267,7 +257,8 @@ app.get("/api/health", (req, res) => {
 if (require.main === module) {
 	app.listen(PORT, () => {
 		console.log(`SnowMotion backend running on port ${PORT}`);
-		if (wallet) console.log(`Signer address: ${wallet.address}`);
+		const relayer = getRelayerAddress();
+		if (relayer) console.log(`Relayer address: ${relayer}`);
 		if (process.env.CONTRACT_ADDRESS) console.log(`Contract address: ${process.env.CONTRACT_ADDRESS}`);
 	});
 }
