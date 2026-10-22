@@ -22,6 +22,7 @@ const Game: React.FC = () => {
 		lives,
 		isPlaying,
 		isGameOver,
+		isPaused,
 		combo,
 		difficulty,
 		timerSeconds,
@@ -39,6 +40,9 @@ const Game: React.FC = () => {
 		collectItem,
 		startGame,
 		resetGame,
+		resumeGame,
+		togglePause,
+		saveGameProgress,
 		getNextItemId,
 		getNextNeededItem,
 		decrementTimer,
@@ -102,6 +106,47 @@ const Game: React.FC = () => {
 		spawnItem(newItem);
 	}, [spawnItem, getNextItemId, difficulty]);
 
+	// Keyboard listener for pause (Space or P)
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.code === "Space" || e.code === "KeyP") {
+				const state = useGameStore.getState();
+				if (state.isPlaying && !state.isGameOver) {
+					e.preventDefault();
+					togglePause();
+				}
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [togglePause]);
+
+	// Accidental reload & close guard: save game state and prompt user
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			const state = useGameStore.getState();
+			if (state.isPlaying && !state.isGameOver) {
+				saveGameProgress();
+				e.preventDefault();
+				e.returnValue = "You have an active game in progress! Your progress will be saved.";
+				return e.returnValue;
+			}
+		};
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "hidden") {
+				saveGameProgress();
+			}
+		};
+
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () => {
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		};
+	}, [saveGameProgress]);
+
 	// Smooth requestAnimationFrame Game Loop
 	useEffect(() => {
 		if (!isPlaying || isGameOver) {
@@ -112,10 +157,17 @@ const Game: React.FC = () => {
 		lastTickTimeRef.current = performance.now();
 
 		const tick = (now: number) => {
+			const state = useGameStore.getState();
+
+			if (state.isPaused) {
+				lastTickTimeRef.current = now;
+				animFrameRef.current = requestAnimationFrame(tick);
+				return;
+			}
+
 			const dt = Math.min((now - lastTickTimeRef.current) / 16.666, 2.5); // normalize to ~60fps
 			lastTickTimeRef.current = now;
 
-			const state = useGameStore.getState();
 			const blizzardFactor = state.isBlizzardActive ? 0.45 : 1.0;
 
 			// Advance positions
@@ -150,6 +202,14 @@ const Game: React.FC = () => {
 
 		const spawnNext = () => {
 			const state = useGameStore.getState();
+			if (!state.isPlaying || state.isGameOver) return;
+
+			if (state.isPaused) {
+				// Retry in 300ms if paused
+				spawnTimerRef.current = window.setTimeout(spawnNext, 300);
+				return;
+			}
+
 			createAndSpawnItem();
 
 			const isLowItems = state.items.length < MIN_ITEMS_ON_SCREEN;
@@ -288,7 +348,7 @@ const Game: React.FC = () => {
 					</button>
 
 					{/* Lives */}
-					<div className="bg-[#FFFDF0] border-3 border-black shadow-[4px_4px_0px_#000] rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5">
+					<div className="bg-[#FFFDF0] border-3 border-black shadow-[4px_4px_0px_#000] rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5">
 						<span className="text-sm sm:text-base">❤️</span>
 						<span className="font-black text-sm sm:text-base text-black">
 							{lives}
@@ -297,6 +357,20 @@ const Game: React.FC = () => {
 							{config.label}
 						</span>
 					</div>
+
+					{/* Pause / Resume Button */}
+					{isPlaying && (
+						<button
+							onClick={togglePause}
+							className={`border-3 border-black p-2 rounded-2xl shadow-[3px_3px_0px_#000] cursor-pointer font-black text-xs active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all ${
+								isPaused ? "bg-[#00FF66] animate-pulse" : "bg-[#FFE600] hover:bg-[#fff04d]"
+							}`}
+							title={isPaused ? "Resume Game (Space)" : "Pause Game (Space)"}
+							aria-label={isPaused ? "Resume Game" : "Pause Game"}
+						>
+							{isPaused ? "▶️" : "⏸️"}
+						</button>
+					)}
 
 					{/* Sound Toggle */}
 					<button
@@ -371,6 +445,68 @@ const Game: React.FC = () => {
 				isOpen={showLeaderboard}
 				onClose={() => setShowLeaderboard(false)}
 			/>
+
+			{/* Paused Modal Overlay */}
+			{isPlaying && isPaused && !isGameOver && (
+				<div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-xs z-50 p-4">
+					<div className="bg-[#FFFDF0] border-4 border-black rounded-3xl p-6 w-full max-w-sm shadow-[8px_8px_0px_#000] text-center">
+						<div className="inline-block bg-[#FFE600] border-3 border-black px-4 py-1 rounded-2xl shadow-[3px_3px_0px_#000] -rotate-1 mb-3">
+							<h2 className="font-black text-2xl uppercase tracking-wider text-black">
+								PAUSED ⏸️
+							</h2>
+						</div>
+
+						<p className="text-xs font-bold text-gray-700 mb-4">
+							Game progress is safely auto-saved. Take a breather!
+						</p>
+
+						<div className="bg-white border-3 border-black rounded-2xl p-3.5 shadow-[3px_3px_0px_#000] mb-5 grid grid-cols-2 gap-3 text-left">
+							<div>
+								<span className="text-[10px] font-black uppercase text-gray-500 block">Score</span>
+								<span className="font-black text-xl text-[#FF007A]">{score}</span>
+							</div>
+							<div>
+								<span className="text-[10px] font-black uppercase text-gray-500 block">Combo</span>
+								<span className="font-black text-xl text-black">x{combo}</span>
+							</div>
+							<div>
+								<span className="text-[10px] font-black uppercase text-gray-500 block">Lives Left</span>
+								<span className="font-black text-base text-red-600">{lives} ❤️</span>
+							</div>
+							<div>
+								<span className="text-[10px] font-black uppercase text-gray-500 block">Time Left</span>
+								<span className="font-black text-base text-black">{timerSeconds}s</span>
+							</div>
+						</div>
+
+						<div className="flex flex-col gap-2.5">
+							<button
+								type="button"
+								onClick={resumeGame}
+								className="w-full bg-[#00FF66] hover:bg-[#33ff85] text-black border-3 border-black py-3 rounded-2xl font-black text-base uppercase shadow-[4px_4px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+							>
+								RESUME GAME ▶️
+							</button>
+							<div className="flex gap-2">
+								<button
+									type="button"
+									onClick={handleRestart}
+									className="flex-1 bg-white hover:bg-gray-100 text-black border-3 border-black py-2 rounded-xl font-black text-xs uppercase shadow-[3px_3px_0px_#000] cursor-pointer"
+								>
+									RESTART 🔄
+								</button>
+								<button
+									type="button"
+									onClick={handleSoundToggle}
+									className="bg-[#FFE600] hover:bg-[#fff04d] text-black border-3 border-black px-4 py-2 rounded-xl font-black text-xs uppercase shadow-[3px_3px_0px_#000] cursor-pointer"
+								>
+									{isMuted ? "🔇" : "🔊"}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* Stellar Wallet Modal (Freighter, Albedo, Mobile) */}
 			<StellarWalletModal

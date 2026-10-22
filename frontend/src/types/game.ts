@@ -47,6 +47,7 @@ export interface GameState {
 	lives: number;
 	isPlaying: boolean;
 	isGameOver: boolean;
+	isPaused: boolean;
 	selectedCharacter: CharacterId;
 	collectedParts: Record<string, boolean>;
 	combo: number;

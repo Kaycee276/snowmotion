@@ -7,6 +7,22 @@ import { INITIAL_LIVES, WRONG_ITEM_PENALTY, TIMER_DURATION } from "../types/game
 import { gameApi } from "../services/gameApi";
 import { sound } from "../utils/soundEffects";
 
+const getSaveKey = (addr?: string | null) => `snowmotion_saved_game_${addr || "guest"}`;
+
+interface SavedGameData {
+	score: number;
+	lives: number;
+	timerSeconds: number;
+	collectedParts: Record<string, boolean>;
+	combo: number;
+	selectedCharacter: CharacterId;
+	difficulty: DifficultyLevel;
+	gameHash: string | null;
+	isBlizzardActive: boolean;
+	blizzardTimeLeft: number;
+	savedAt: number;
+}
+
 interface GameStore extends GameState {
 	items: FallingItem[];
 	itemIdCounter: number;
@@ -35,10 +51,18 @@ interface GameStore extends GameState {
 	setLives: (lives: number) => void;
 	setIsPlaying: (isPlaying: boolean) => void;
 	setIsGameOver: (isGameOver: boolean) => void;
+	pauseGame: () => void;
+	resumeGame: () => void;
+	togglePause: () => void;
 	setDifficulty: (difficulty: DifficultyLevel) => void;
 	resetCharacterAssembly: () => void;
 	resetGame: () => void;
 	startGame: (walletAddress?: string) => Promise<void>;
+	saveGameProgress: () => void;
+	restoreGameProgress: (address?: string) => boolean;
+	clearSavedProgress: (address?: string) => void;
+	hasSavedGame: (address?: string) => boolean;
+	getSavedGameSummary: (address?: string) => SavedGameData | null;
 	getNextItemId: () => string;
 	getNextNeededItem: () => string | null;
 	startTimer: () => void;
@@ -64,6 +88,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 	lives: INITIAL_LIVES,
 	isPlaying: false,
 	isGameOver: false,
+	isPaused: false,
 	selectedCharacter: "snowman",
 	collectedParts: {},
 	combo: 0,
@@ -113,6 +138,105 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		set({ selectedCharacter: characterId, collectedParts: {} });
 	},
 
+	pauseGame: () => set({ isPaused: true }),
+	resumeGame: () => set({ isPaused: false }),
+	togglePause: () => set((state) => ({ isPaused: !state.isPaused })),
+
+	saveGameProgress: () => {
+		const state = get();
+		if (!state.isPlaying || state.isGameOver) return;
+		const key = getSaveKey(state.connectedAddress);
+		const data: SavedGameData = {
+			score: state.score,
+			lives: state.lives,
+			timerSeconds: state.timerSeconds,
+			collectedParts: state.collectedParts,
+			combo: state.combo,
+			selectedCharacter: state.selectedCharacter,
+			difficulty: state.difficulty,
+			gameHash: state.gameHash,
+			isBlizzardActive: state.isBlizzardActive,
+			blizzardTimeLeft: state.blizzardTimeLeft,
+			savedAt: Date.now(),
+		};
+		try {
+			localStorage.setItem(key, JSON.stringify(data));
+		} catch {
+			// ignore storage quotas
+		}
+	},
+
+	hasSavedGame: (address?: string) => {
+		const key = getSaveKey(address || get().connectedAddress);
+		try {
+			const raw = localStorage.getItem(key);
+			if (!raw) return false;
+			const data = JSON.parse(raw);
+			return Date.now() - (data.savedAt || 0) < 25 * 60 * 1000;
+		} catch {
+			return false;
+		}
+	},
+
+	getSavedGameSummary: (address?: string) => {
+		const key = getSaveKey(address || get().connectedAddress);
+		try {
+			const raw = localStorage.getItem(key);
+			if (!raw) return null;
+			const data = JSON.parse(raw);
+			if (Date.now() - (data.savedAt || 0) > 25 * 60 * 1000) return null;
+			return data as SavedGameData;
+		} catch {
+			return null;
+		}
+	},
+
+	restoreGameProgress: (address?: string) => {
+		const targetAddress = address || get().connectedAddress;
+		const key = getSaveKey(targetAddress);
+		try {
+			const raw = localStorage.getItem(key);
+			if (!raw) return false;
+			const data: SavedGameData = JSON.parse(raw);
+			if (Date.now() - (data.savedAt || 0) > 25 * 60 * 1000) {
+				localStorage.removeItem(key);
+				return false;
+			}
+
+			set({
+				score: data.score || 0,
+				lives: data.lives || INITIAL_LIVES,
+				timerSeconds: data.timerSeconds || TIMER_DURATION,
+				collectedParts: data.collectedParts || {},
+				combo: data.combo || 0,
+				selectedCharacter: data.selectedCharacter || "snowman",
+				difficulty: data.difficulty || "medium",
+				gameHash: data.gameHash || null,
+				isBlizzardActive: Boolean(data.isBlizzardActive),
+				blizzardTimeLeft: data.blizzardTimeLeft || 0,
+				items: [],
+				isPlaying: true,
+				isGameOver: false,
+				isPaused: true, // Start paused to give player a moment
+				timerActive: true,
+				powerupMessage: "WELCOME BACK! GAME RESUMED ⏸️",
+			});
+			setTimeout(() => set({ powerupMessage: null }), 3000);
+			return true;
+		} catch {
+			return false;
+		}
+	},
+
+	clearSavedProgress: (address?: string) => {
+		const key = getSaveKey(address || get().connectedAddress);
+		try {
+			localStorage.removeItem(key);
+		} catch {
+			// ignore
+		}
+	},
+
 	spawnItem: (item) =>
 		set((state) => ({
 			items: [...state.items, item],
@@ -132,6 +256,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	collectItem: (itemId, itemType) => {
 		const state = get();
+		if (state.isPaused) return; // Do not allow collecting while paused
+
 		const itemExists = state.items.some((item) => item.id === itemId);
 		if (!itemExists) return;
 
@@ -147,6 +273,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
+			get().saveGameProgress();
 			return;
 		}
 
@@ -159,6 +286,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
+			get().saveGameProgress();
 			return;
 		}
 
@@ -174,22 +302,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
+			get().saveGameProgress();
 			return;
 		}
 
 		if (itemType === "hazard_spike") {
 			sound.playHazard();
 			const newLives = state.lives - 1;
+			const isOver = newLives <= 0;
+			if (isOver) {
+				sound.playGameOver();
+				get().clearSavedProgress();
+			} else {
+				get().saveGameProgress();
+			}
 			set({
 				lives: newLives,
 				combo: 0,
 				lifeLossEffect: true,
 				powerupMessage: "HAZARD HIT! -1 LIFE 💥",
 				items: state.items.filter((item) => item.id !== itemId),
-				isGameOver: newLives <= 0,
-				isPlaying: newLives > 0,
+				isGameOver: isOver,
+				isPlaying: !isOver,
 			});
-			if (newLives <= 0) sound.playGameOver();
 			setTimeout(() => {
 				set({ lifeLossEffect: false, powerupMessage: null });
 			}, 1500);
@@ -207,11 +342,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			const isComplete = requiredParts.every((part) => updatedCollected[part]);
 
 			if (isComplete) {
-				// Completed the full character!
 				sound.playComplete();
 				let pointsToAdd = 2;
 				if (updatedCollected[bonusPart]) {
-					pointsToAdd += 2; // Bonus points for equipped accessory
+					pointsToAdd += 2;
 				}
 				const newCombo = state.combo + 1;
 				sound.playCombo(newCombo);
@@ -231,8 +365,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 					items: state.items.filter((item) => item.id !== itemId),
 				});
 			}
+			get().saveGameProgress();
 		} else if (itemType === bonusPart) {
-			// Collected the optional bonus part
 			sound.playCatch();
 			set({
 				collectedParts: { ...state.collectedParts, [bonusPart]: true },
@@ -240,8 +374,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				items: state.items.filter((item) => item.id !== itemId),
 			});
 			setTimeout(() => set({ powerupMessage: null }), 2000);
+			get().saveGameProgress();
 		} else {
-			// Wrong item clicked!
 			sound.playWrong();
 			const newTimerSeconds = Math.max(0, state.timerSeconds - WRONG_ITEM_PENALTY);
 			set({
@@ -255,6 +389,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			setTimeout(() => {
 				set({ lifeLossEffect: false, powerupMessage: null });
 			}, 1000);
+			get().saveGameProgress();
 		}
 	},
 
@@ -270,9 +405,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	decrementTimer: () => {
 		const state = get();
-		if (!state.timerActive) return;
+		if (!state.timerActive || state.isPaused) return;
 
-		// Play tick sound in final 5 seconds
 		if (state.timerSeconds <= 5 && state.timerSeconds > 0) {
 			sound.playTick();
 		}
@@ -284,6 +418,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			const isOver = newLives <= 0;
 			if (isOver) {
 				sound.playGameOver();
+				get().clearSavedProgress();
+			} else {
+				get().saveGameProgress();
 			}
 			set({
 				lives: newLives,
@@ -302,6 +439,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	tickBlizzard: () => {
 		const state = get();
+		if (state.isPaused) return;
 		if (state.isBlizzardActive) {
 			const nextTime = state.blizzardTimeLeft - 1;
 			if (nextTime <= 0) {
@@ -314,12 +452,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	resetTimer: () => set({ timerSeconds: TIMER_DURATION, timerActive: false }),
 
-	resetGame: () =>
+	resetGame: () => {
+		get().clearSavedProgress();
 		set({
 			score: 0,
 			lives: INITIAL_LIVES,
 			isPlaying: false,
 			isGameOver: false,
+			isPaused: false,
 			collectedParts: {},
 			combo: 0,
 			items: [],
@@ -331,7 +471,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			blizzardTimeLeft: 0,
 			powerupMessage: null,
 			gameHash: null,
-		}),
+		});
+	},
 
 	startGame: async (walletAddress?: string) => {
 		try {
@@ -347,6 +488,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				lives: INITIAL_LIVES,
 				isPlaying: true,
 				isGameOver: false,
+				isPaused: false,
 				collectedParts: {},
 				combo: 0,
 				items: [],
@@ -359,6 +501,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				powerupMessage: null,
 				gameHash: session.gameHash,
 			});
+			get().saveGameProgress();
 		} catch (error) {
 			console.error("Failed to start game:", error);
 			throw error;
