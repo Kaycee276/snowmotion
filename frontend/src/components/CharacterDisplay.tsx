@@ -32,31 +32,31 @@ export const CharacterDisplay: React.FC = () => {
 				</div>
 
 				{/* Parts Row */}
-				<div className="flex items-center justify-center gap-2 sm:gap-4">
+				<div className="flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto py-1">
 					{charConfig.parts.map((part) => {
 						const isCollected = Boolean(collectedParts[part.id]);
 						return (
 							<div
 								key={part.id}
-								className={`relative flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border-3 border-black transition-all ${
+								className={`relative flex flex-col items-center justify-center p-1 sm:p-2 rounded-xl border-2 sm:border-3 border-black transition-all min-w-[56px] sm:min-w-[72px] shrink-0 ${
 									isCollected
 										? "bg-[#00FF66] shadow-[3px_3px_0px_#000] scale-105"
 										: "bg-white/80 opacity-40 shadow-[2px_2px_0px_#000]"
 								}`}
 							>
-								<div className="w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center">
-									<Item3D type={part.id as ItemType} size={42} />
+								<div className="w-8 h-8 sm:w-11 sm:h-11 flex items-center justify-center">
+									<Item3D type={part.id as ItemType} size={36} />
 								</div>
-								<span className="text-[10px] sm:text-xs font-black uppercase text-black mt-1">
+								<span className="text-[9px] sm:text-xs font-black uppercase text-black mt-0.5 truncate max-w-[54px] sm:max-w-none">
 									{part.label}
 								</span>
 								{part.isBonus && (
-									<span className="absolute -top-2 -right-2 bg-[#FF007A] text-white text-[9px] font-black px-1 rounded-sm border border-black">
+									<span className="absolute -top-2 -right-1.5 bg-[#FF007A] text-white text-[8px] sm:text-[9px] font-black px-1 rounded-sm border border-black">
 										BONUS
 									</span>
 								)}
 								{isCollected && (
-									<span className="absolute -bottom-2 bg-black text-[#00FF66] text-[10px] font-black px-1.5 rounded-full border border-white">
+									<span className="absolute -bottom-2 bg-black text-[#00FF66] text-[9px] sm:text-[10px] font-black px-1.5 rounded-full border border-white">
 										✓
 									</span>
 								)}
