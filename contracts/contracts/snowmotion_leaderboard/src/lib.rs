@@ -100,8 +100,9 @@ impl SnowmotionLeaderboard {
             return Err(Error::GameAlreadyRecorded);
         }
 
-        // Authentication: player must authenticate submission
-        player.require_auth();
+        // Authentication: Contract admin (authorized backend relayer) must authenticate submission
+        let admin = Self::get_admin(env.clone())?;
+        admin.require_auth();
 
         let timestamp = env.ledger().timestamp();
 

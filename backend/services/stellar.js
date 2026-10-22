@@ -6,7 +6,7 @@ const execAsync = promisify(exec);
 const { rpc: SorobanRpc, Keypair, Networks, TransactionBuilder, Contract, nativeToScVal, scValToNative } = StellarSdk;
 
 const RPC_URL = process.env.RPC_URL || "https://soroban-testnet.stellar.org";
-const CONTRACT_ID = process.env.CONTRACT_ADDRESS || "CBKNJITAAMAECDIIARJVDVVEH7M5UKD7NKBCZYYDZQVEZUY7OPQ4ZIYZ";
+const CONTRACT_ID = process.env.CONTRACT_ADDRESS || "CCDANXNV2JNHTVJLTUMAPM77KQHNIYON7TKDXH3J7YYWLTH6NPRHSBK7";
 const NETWORK_PASSPHRASE = process.env.STELLAR_NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 
 function getCleanSecretKey() {
