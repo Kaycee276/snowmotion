@@ -1,6 +1,6 @@
 # ❄️ SnowMotion
 
-[![CI Pipeline](https://github.com/Kaycee276/snowmotion/actions/workflows/ci.yml/badge.svg)](https://github.com/Kaycee276/snowmotion/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/QreeGames/snowmotion/actions/workflows/ci.yml/badge.svg)](https://github.com/QreeGames/snowmotion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Stellar](https://img.shields.io/badge/Blockchain-Stellar%20Soroban-black?logo=stellar)](https://stellar.org)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript-blue?logo=react)](https://react.dev)

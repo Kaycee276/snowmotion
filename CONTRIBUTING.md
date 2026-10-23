@@ -34,7 +34,7 @@ SnowMotion is organized as a monorepo:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Kaycee276/snowmotion.git
+git clone https://github.com/QreeGames/snowmotion.git
 cd snowmotion
 ```
 

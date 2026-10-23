@@ -58,7 +58,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
 							SOUND: {isMuted ? "OFF" : "ON"}
 						</button>
 						<a
-							href="https://github.com/Kaycee276/snowmotion"
+							href="https://github.com/QreeGames/snowmotion"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="hover:underline flex items-center gap-1"
@@ -624,7 +624,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
 							Stellar Expert ↗
 						</a>
 						<a
-							href="https://github.com/Kaycee276/snowmotion"
+							href="https://github.com/QreeGames/snowmotion"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="underline hover:text-[#FF007A]"
@@ -632,7 +632,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
 							GitHub ↗
 						</a>
 						<a
-							href="https://github.com/Kaycee276/snowmotion/blob/master/LICENSE"
+							href="https://github.com/QreeGames/snowmotion/blob/master/LICENSE"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="underline hover:text-[#FF007A]"
